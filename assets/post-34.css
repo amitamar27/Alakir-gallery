@@ -1,0 +1,99 @@
+.elementor-34 .elementor-element.elementor-element-4de9202{--display:flex;--gap:0px 0px;--row-gap:0px;--column-gap:0px;--overlay-opacity:0.5;--overlay-mix-blend-mode:multiply;--margin-top:0px;--margin-bottom:0px;--margin-left:0px;--margin-right:0px;--padding-top:0px;--padding-bottom:0px;--padding-left:0px;--padding-right:0px;}.elementor-34 .elementor-element.elementor-element-4de9202:not(.elementor-motion-effects-element-type-background), .elementor-34 .elementor-element.elementor-element-4de9202 > .elementor-motion-effects-container > .elementor-motion-effects-layer{background-image:url("./background-street-art-scaled.png");background-repeat:no-repeat;background-size:cover;}.elementor-34 .elementor-element.elementor-element-4de9202::before, .elementor-34 .elementor-element.elementor-element-4de9202 > .elementor-background-video-container::before, .elementor-34 .elementor-element.elementor-element-4de9202 > .e-con-inner > .elementor-background-video-container::before, .elementor-34 .elementor-element.elementor-element-4de9202 > .elementor-background-slideshow::before, .elementor-34 .elementor-element.elementor-element-4de9202 > .e-con-inner > .elementor-background-slideshow::before, .elementor-34 .elementor-element.elementor-element-4de9202 > .elementor-motion-effects-container > .elementor-motion-effects-layer::before{background-color:#F7F7F7;--background-overlay:'';}.elementor-34 .elementor-element.elementor-element-cf20426{--display:flex;--margin-top:0px;--margin-bottom:0px;--margin-left:0px;--margin-right:0px;--padding-top:0px;--padding-bottom:0px;--padding-left:0px;--padding-right:0px;}.elementor-widget-image .widget-image-caption{color:var( --e-global-color-text );font-family:var( --e-global-typography-text-font-family ), Sans-serif;font-weight:var( --e-global-typography-text-font-weight );}.elementor-34 .elementor-element.elementor-element-00ac78e{--display:flex;--min-height:100vh;--padding-top:100px;--padding-bottom:0px;--padding-left:0px;--padding-right:0px;}.elementor-34 .elementor-element.elementor-element-81fd558{--display:flex;--flex-direction:column;--container-widget-width:100%;--container-widget-height:initial;--container-widget-flex-grow:0;--container-widget-align-self:initial;--flex-wrap-mobile:wrap;--padding-top:100px;--padding-bottom:0px;--padding-left:0px;--padding-right:0px;}.elementor-widget-heading .elementor-heading-title{font-family:var( --e-global-typography-primary-font-family ), Sans-serif;font-weight:var( --e-global-typography-primary-font-weight );color:var( --e-global-color-primary );}.elementor-34 .elementor-element.elementor-element-225316e{padding:0px 0px 0px 0px;--e-transform-origin-x:center;--e-transform-origin-y:center;}.elementor-34 .elementor-element.elementor-element-225316e.elementor-element{--align-self:flex-end;}.elementor-34 .elementor-element.elementor-element-225316e .elementor-heading-title{font-family:"Rubik Doodle Shadow", Sans-serif;font-size:80px;font-weight:600;letter-spacing:10px;color:#F0F0F0;}.elementor-34 .elementor-element.elementor-element-5a4066b{width:initial;max-width:initial;padding:0px 0px 0px 0px;}.elementor-34 .elementor-element.elementor-element-5a4066b img{width:100%;}.elementor-34 .elementor-element.elementor-element-2694513{width:initial;max-width:initial;padding:0px 0px 0px 0px;}.elementor-34 .elementor-element.elementor-element-2694513 img{width:100%;}.elementor-34 .elementor-element.elementor-element-d914747{width:initial;max-width:initial;}.elementor-34 .elementor-element.elementor-element-d914747 img{width:100%;}.elementor-34 .elementor-element.elementor-element-db9f683{--display:flex;--min-height:100vh;}.elementor-34 .elementor-element.elementor-element-db9f683:not(.elementor-motion-effects-element-type-background), .elementor-34 .elementor-element.elementor-element-db9f683 > .elementor-motion-effects-container > .elementor-motion-effects-layer{background-color:#2E728F;}@media(max-width:767px){.elementor-34 .elementor-element.elementor-element-225316e{padding:200px 0px 0px 24px;}.elementor-34 .elementor-element.elementor-element-225316e .elementor-heading-title{font-size:39px;}.elementor-34 .elementor-element.elementor-element-2694513{z-index:-1;}.elementor-34 .elementor-element.elementor-element-d914747{z-index:-2;}}/* Start custom CSS for container, class: .elementor-element-4de9202 */#logo-container {
+    pointer-events: none;
+    display: block !important;
+    visibility: visible !important;
+    /* מוודאים שאין מעברים (transitions) שיפריעו ל-GSAP */
+    transition: none !important; 
+}
+
+#logo-container img {
+    width: 600px; /* הגודל ההתחלתי הגדול */
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+#gallery-section {
+    position: relative;
+    z-index: 100;
+    margin-top: 100vh;
+    min-height: 100vh;
+}
+
+#splash-container {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: 1;
+}/* End custom CSS */
+/* Start custom CSS for container, class: .elementor-element-81fd558 */.cards-wrapper {
+  position: relative;
+  height: 100vh;
+  overflow: visible;
+  transition: none !important;
+  animation: none !important;
+  overscroll-behavior:none !important;
+
+}
+
+/* כרטיס */
+.cards-wrapper .card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  /* 🔥 שליטה אמיתית בגודל */
+  width: clamp(80px, 22vw, 180px) !important;
+
+  transform: translate(-50%, -50%);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+/* תמונה בתוך הכרטיס */
+.cards-wrapper .card img {
+  width: 100% !important;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+}
+
+/* מצב התחלתי (stack) */
+.cards-wrapper .card-1 {
+  z-index: 3;
+  transform: translate(-50%, -50%) rotate(-6deg);
+}
+
+.cards-wrapper .card-2 {
+  z-index: 2;
+  transform: translate(-50%, -50%) rotate(2deg);
+}
+
+.cards-wrapper .card-3 {
+  z-index: 1;
+  transform: translate(-50%, -50%) rotate(6deg);
+}
+
+/* טאבלט */
+@media (max-width: 1024px) {
+  .cards-wrapper {
+    height: 90vh;
+  }
+
+  .cards-wrapper .card {
+    width: clamp(70px, 26vw, 160px) !important;
+  }
+}
+
+/* מובייל */
+@media (max-width: 767px) {
+  .cards-wrapper {
+    height: 80vh;
+  }
+
+  .cards-wrapper .card {
+    width: clamp(60px, 38vw, 140px) !important;
+  }
+}/* End custom CSS */

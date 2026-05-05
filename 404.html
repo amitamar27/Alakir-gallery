@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he-IL" style="scroll-behavior: smooth;">
+<head>
+	<meta charset="UTF-8">
+	<title>404 - עמוד לא נמצא | Alakir Gallery</title>
+	<meta name="description" content="עמוד זה לא קיים. חזרו לגלריה אלקיר.">
+	<meta name="robots" content="noindex, follow">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	
+	<link rel="stylesheet" href="./assets/reset.css">
+	<link rel="stylesheet" href="./assets/theme.css">
+	<link rel="stylesheet" href="./assets/header-footer.css">
+	<link rel="stylesheet" href="./assets/custom-styles.css">
+	
+	<style>
+		body {
+			background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+			display: flex;
+			flex-direction: column;
+			min-height: 100vh;
+			font-family: 'Roboto', sans-serif;
+		}
+
+		.ak-404-container {
+			flex: 1;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 80px 20px;
+			text-align: center;
+		}
+
+		.ak-404-content {
+			max-width: 600px;
+			animation: fadeInUp 0.8s ease-out;
+		}
+
+		.ak-404-code {
+			font-size: 180px;
+			font-weight: 900;
+			line-height: 1;
+			margin: 0;
+			background: linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			background-clip: text;
+			letter-spacing: -8px;
+		}
+
+		.ak-404-title {
+			font-size: 32px;
+			font-weight: 700;
+			margin: 20px 0;
+			color: #1a1a1a;
+		}
+
+		.ak-404-subtitle {
+			font-size: 16px;
+			color: #666;
+			margin: 15px 0 30px 0;
+			line-height: 1.6;
+		}
+
+		.ak-404-text {
+			font-size: 18px;
+			color: #555;
+			margin-bottom: 40px;
+			line-height: 1.8;
+		}
+
+		.ak-404-buttons {
+			display: flex;
+			gap: 15px;
+			justify-content: center;
+			flex-wrap: wrap;
+		}
+
+		.ak-404-btn {
+			padding: 14px 32px;
+			font-size: 16px;
+			font-weight: 600;
+			border: none;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			text-decoration: none;
+			display: inline-block;
+			border-radius: 4px;
+		}
+
+		.ak-404-btn-primary {
+			background: #1a1a1a;
+			color: white;
+		}
+
+		.ak-404-btn-primary:hover {
+			background: #333;
+			transform: translateY(-2px);
+			box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+		}
+
+		.ak-404-btn-secondary {
+			background: white;
+			color: #1a1a1a;
+			border: 2px solid #1a1a1a;
+		}
+
+		.ak-404-btn-secondary:hover {
+			background: #f0f0f0;
+			transform: translateY(-2px);
+		}
+
+		.ak-404-decoration {
+			margin-top: 50px;
+			padding-top: 40px;
+			border-top: 1px solid #ddd;
+			font-size: 14px;
+			color: #999;
+		}
+
+		.ak-404-emoji {
+			font-size: 80px;
+			margin-bottom: 20px;
+			display: block;
+			animation: bounce 2s infinite;
+		}
+
+		@keyframes fadeInUp {
+			from {
+				opacity: 0;
+				transform: translateY(30px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		@keyframes bounce {
+			0%, 100% { transform: translateY(0); }
+			50% { transform: translateY(-10px); }
+		}
+
+		@media (max-width: 768px) {
+			.ak-404-code {
+				font-size: 100px;
+				letter-spacing: -4px;
+			}
+
+			.ak-404-title {
+				font-size: 24px;
+			}
+
+			.ak-404-text {
+				font-size: 16px;
+			}
+
+			.ak-404-buttons {
+				flex-direction: column;
+			}
+
+			.ak-404-btn {
+				width: 100%;
+			}
+		}
+	
+        /* ===== Anti-copy / anti-select on public pages =====
+           Casual deterrent — prevents accidental text selection, right-click
+           menu, image drag, and copy/cut. Power users with devtools can still
+           bypass this; it's not bulletproof DRM. Form fields keep normal
+           selection behavior so search inputs etc. still work. */
+        html, body {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        input, textarea, select, [contenteditable="true"] {
+            user-select: text;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+        }
+        img {
+            -webkit-user-drag: none;
+            user-drag: none;
+            pointer-events: auto;
+        }
+
+</style>
+	<link rel="icon" href="./assets/logo-alakir-gallery.png">
+</head>
+<body>
+
+<!-- ============== NAVBAR ============== -->
+<header class="ak-nav" id="ak-nav">
+	<a href="index.html" class="ak-nav__brand">
+		<span class="ak-nav__brand-mark">A</span>
+		<span>ALAKIR&nbsp;GALLERY</span>
+	</a>
+	<nav>
+		<ul class="ak-nav__menu">
+			<li><a href="index.html#splash-container" class="ak-nav__link">בית</a></li>
+			<li><a href="index.html#featured-works" class="ak-nav__link">גלריה</a></li>
+			<li><a href="index.html#artists" class="ak-nav__link">אמנים</a></li>
+			<li><a href="index.html#events" class="ak-nav__link">אירועים</a></li>
+			<li><a href="index.html#about" class="ak-nav__link">אודות</a></li>
+		</ul>
+	</nav>
+	<button class="ak-nav__cta" data-cursor="צרו קשר">צרו קשר</button>
+	<button class="ak-nav__burger" aria-label="תפריט">
+		<span></span><span></span><span></span>
+	</button>
+</header>
+
+<!-- Mobile drawer -->
+<div class="ak-drawer">
+	<a href="index.html">בית</a>
+	<a href="index.html#featured-works">גלריה</a>
+	<a href="index.html#artists">אמנים</a>
+	<a href="index.html#events">אירועים</a>
+	<a href="index.html#about">אודות</a>
+	<a href="index.html#footer">צרו קשר</a>
+</div>
+
+<!-- ============== 404 CONTENT ============== -->
+<div class="ak-404-container">
+	<div class="ak-404-content">
+		<span class="ak-404-emoji">🎨</span>
+		
+		<h1 class="ak-404-code">404</h1>
+		
+		<h2 class="ak-404-title">עמוד לא נמצא</h2>
+		
+		<p class="ak-404-subtitle">סליחה, היצירה שחיפשת לא קיימת בגלריה שלנו.</p>
+		
+		<p class="ak-404-text">
+			ייתכן שהקישור שגוי, או שהעמוד הוסר / הועבר לכתובת אחרת.
+		</p>
+		
+		<div class="ak-404-buttons">
+			<a href="index.html" class="ak-404-btn ak-404-btn-primary">חזור לעמוד הבית</a>
+			<a href="gallery.html" class="ak-404-btn ak-404-btn-secondary">לגלריה המלאה</a>
+		</div>
+		
+		<div class="ak-404-decoration">
+			<p>אם אתה חושב שזה שגיאה, אנא <a href="mailto:hello@alakirgallery.co.il" style="color: #1a1a1a; text-decoration: underline;">צור קשר</a> אתנו.</p>
+		</div>
+	</div>
+</div>
+
+<!-- ============== FOOTER ============== -->
+<footer class="ak-footer" id="footer">
+	<div class="ak-footer__top">
+		<div class="ak-footer__col">
+			<h4>הגלריה</h4>
+			<p class="ak-footer__about-text">גלריה אלקיר נוסדה ב-2018 כמרחב לאמנות עכשווית ישראלית.</p>
+		</div>
+		<div class="ak-footer__col">
+			<h4>שעות</h4>
+			<ul>
+				<li>ראשון – חמישי · 11:00–19:00</li>
+				<li>שישי · 10:00–14:00</li>
+				<li>שבת · סגור</li>
+			</ul>
+		</div>
+		<div class="ak-footer__col">
+			<h4>ביקור</h4>
+			<ul>
+				<li>רוטשילד 47</li>
+				<li>תל אביב-יפו</li>
+				<li><a href="#">מפה והגעה</a></li>
+			</ul>
+		</div>
+		<div class="ak-footer__col">
+			<h4>קישור</h4>
+			<ul>
+				<li><a href="mailto:hello@alakirgallery.co.il">hello@alakirgallery.co.il</a></li>
+				<li><a href="tel:+97231234567">03-123-4567</a></li>
+				<li><a href="#">Instagram</a></li>
+				<li><a href="#">Facebook</a></li>
+			</ul>
+		</div>
+	</div>
+
+	<div class="ak-footer__wordmark" aria-hidden="true">
+		<span>ALAKIR</span>
+	</div>
+
+	<div class="ak-footer__bottom">
+		<span>© 2026 Alakir Gallery · כל הזכויות שמורות</span>
+		<span><a href="#">מדיניות פרטיות</a> · <a href="#">תנאי שימוש</a></span>
+	</div>
+</footer>
+
+<script src="./assets/jquery.min.js"></script>
+<script src="./assets/custom-scripts.js"></script>
+
+    <script>
+    /* ===== Anti-copy event guard =====
+       Cancels copy/cut/drag/right-click globally. Form fields are exempt
+       so visitors can still type in search/cart/checkout. */
+    (function () {
+        const FORM_TAGS = /^(INPUT|TEXTAREA|SELECT)$/;
+        const block = e => {
+            const t = e.target || e.srcElement;
+            if (t && (FORM_TAGS.test(t.tagName) ||
+                      t.isContentEditable)) return;
+            e.preventDefault();
+            return false;
+        };
+        ['copy', 'cut', 'contextmenu', 'dragstart', 'selectstart']
+            .forEach(evt => document.addEventListener(evt, block, true));
+        // Block keyboard shortcuts: Ctrl/Cmd+C, +A, +X, +S, +U, F12 view-source
+        document.addEventListener('keydown', e => {
+            const t = e.target || e.srcElement;
+            if (t && (FORM_TAGS.test(t.tagName) || t.isContentEditable)) return;
+            const k = (e.key || '').toLowerCase();
+            const mod = e.ctrlKey || e.metaKey;
+            if (mod && (k === 'c' || k === 'a' || k === 'x' ||
+                        k === 's' || k === 'u' || k === 'p')) {
+                e.preventDefault();
+                return false;
+            }
+            if (e.key === 'F12') { e.preventDefault(); return false; }
+        }, true);
+    })();
+    </script>
+</body>
+</html>

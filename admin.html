@@ -1,0 +1,2884 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALAKIR · Admin</title>
+    <link rel="icon" href="./assets/logo-alakir-gallery.png">
+    <link rel="stylesheet" href="./assets/fonts-roboto-slab.css">
+    <link rel="stylesheet" href="./assets/fonts-roboto.css">
+    <link rel="stylesheet" href="./assets/fonts-rubik-doodle-shadow.css">
+    <style>
+        :root {
+            --ak-cream: #f7f4ee;
+            --ak-ink: #1a1a1a;
+            --ak-ink-soft: #4a4540;
+            --ak-mute: #8c857c;
+            --ak-terracotta: #c89274;
+            --ak-terracotta-deep: #8a4f2e;
+            --ak-teal: #2E728F;
+            --ak-green: #4a7c59;
+            --ak-red: #8a3424;
+            --ak-serif: "Roboto Slab", Georgia, serif;
+            --ak-sans: "Roboto", system-ui, sans-serif;
+            --ak-display: "Rubik Doodle Shadow", serif;
+            --ak-ease: cubic-bezier(0.65, 0.01, 0.05, 1);
+            --ak-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --pg-bg: #f0ece3;
+            --shadow-sm: 0 4px 14px -4px rgba(0,0,0,0.18);
+            --shadow-md: 0 10px 28px -8px rgba(0,0,0,0.25);
+            --shadow-lg: 0 24px 56px -16px rgba(0,0,0,0.32);
+            --line: rgba(26, 26, 26, 0.1);
+            --line-soft: rgba(26, 26, 26, 0.06);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--ak-sans);
+            color: var(--ak-ink);
+            background:
+                /* page-wide warm glow from the top — sits as part of body bg */
+                radial-gradient(
+                    ellipse 1400px 720px at 50% -120px,
+                    rgba(255, 248, 232, 0.75),
+                    rgba(255, 248, 232, 0.25) 40%,
+                    transparent 72%
+                ),
+                radial-gradient(circle at 18% 8%, rgba(200,146,116,0.12), transparent 42%),
+                radial-gradient(circle at 82% 6%, rgba(46,114,143,0.10), transparent 42%),
+                linear-gradient(180deg, #f1ecdf 0%, #e6dfcd 100%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+            position: relative;
+        }
+        /* Pegboard texture — tamed via low opacity + multiply */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url('./assets/pegboard.svg');
+            background-size: 36px 36px;
+            opacity: 0.32;
+            pointer-events: none;
+            z-index: 0;
+            mix-blend-mode: multiply;
+        }
+        /* CURSOR SPOTLIGHT — sits BELOW content, only visible on the
+           background between/around cards. Brighter colors so it shines
+           clearly on the pegboard without disturbing readability of cards. */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                /* outer warm halo — wide, soft, golden */
+                radial-gradient(
+                    circle 680px at var(--mx, 50%) var(--my, 30%),
+                    rgba(255, 210, 140, 0.70) 0%,
+                    rgba(255, 205, 135, 0.42) 28%,
+                    rgba(255, 198, 125, 0.18) 55%,
+                    transparent 80%
+                ),
+                /* inner bright core — small, near-white */
+                radial-gradient(
+                    circle 280px at var(--mx, 50%) var(--my, 30%),
+                    rgba(255, 250, 230, 0.85) 0%,
+                    rgba(255, 245, 220, 0.45) 40%,
+                    transparent 84%
+                );
+            pointer-events: none;
+            z-index: 0;            /* behind content (z-index 1+), above bg */
+            will-change: background;
+        }
+        /* Make sure real content sits above the decorative spotlight layer.
+           Note: .ak-login, .ak-drawer, .ak-confirm, .ak-toast are already
+           position:fixed with their own z-index; they don't need this lift
+           and forcing position:relative on them would BREAK their full-screen
+           coverage. Only the in-flow shell (.ak-app) and the floating bulk
+           bar need the lift. */
+        body > .ak-app,
+        body > .ak-bulk { position: relative; z-index: 1; }
+        button { font-family: inherit; }
+
+        /* ===========================================================
+           LOGIN SCREEN
+           =========================================================== */
+        .ak-login {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 50% 35%, rgba(255,248,232,0.85), rgba(241,236,223,0.95) 60%);
+            display: grid;
+            place-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+        .ak-login.is-hidden { opacity: 0; pointer-events: none; }
+
+        .ak-login__card {
+            width: min(420px, 92vw);
+            background: var(--ak-cream);
+            box-shadow: var(--shadow-lg);
+            padding: 44px 36px 36px;
+            text-align: center;
+            position: relative;
+        }
+        .ak-login__card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg,
+                var(--ak-terracotta-deep) 0%,
+                var(--ak-terracotta) 40%,
+                var(--ak-teal) 100%);
+        }
+        .ak-login__brand {
+            font-family: var(--ak-display);
+            font-size: 36px;
+            color: var(--ak-ink);
+            letter-spacing: 0.08em;
+            margin-bottom: 4px;
+        }
+        .ak-login__sub {
+            font-family: var(--ak-serif);
+            font-size: 11px;
+            letter-spacing: 0.42em;
+            text-transform: uppercase;
+            color: var(--ak-mute);
+            margin-bottom: 32px;
+        }
+        .ak-login__field {
+            text-align: right;
+            margin-bottom: 16px;
+        }
+        .ak-login__field label {
+            display: block;
+            font-family: var(--ak-serif);
+            font-size: 10px;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--ak-ink-soft);
+            margin-bottom: 6px;
+        }
+        .ak-login__field input {
+            width: 100%;
+            padding: 13px 14px;
+            font-family: var(--ak-serif);
+            font-size: 15px;
+            background: rgba(255,255,255,0.7);
+            border: 1px solid rgba(26,26,26,0.18);
+            outline: none;
+            direction: ltr;
+            transition: border-color 0.25s, background 0.25s;
+        }
+        .ak-login__field input:focus {
+            border-color: var(--ak-ink);
+            background: #fff;
+        }
+        .ak-login__btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: var(--ak-ink);
+            color: var(--ak-cream);
+            border: none;
+            cursor: pointer;
+            font-family: var(--ak-serif);
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.42em;
+            text-transform: uppercase;
+            margin-top: 8px;
+            transition: background 0.3s;
+        }
+        .ak-login__btn:hover { background: var(--ak-terracotta-deep); }
+        .ak-login__hint {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px dashed var(--line);
+            font-family: var(--ak-serif);
+            font-style: italic;
+            font-size: 11px;
+            color: var(--ak-mute);
+            text-align: center;
+            line-height: 1.6;
+        }
+        .ak-login__hint code {
+            font-family: var(--ak-sans);
+            font-style: normal;
+            background: rgba(26,26,26,0.08);
+            padding: 1px 6px;
+            font-size: 10px;
+            letter-spacing: 0;
+        }
+        .ak-login__error {
+            margin-top: 12px;
+            padding: 8px 12px;
+            background: rgba(138, 52, 36, 0.1);
+            border: 1px solid rgba(138, 52, 36, 0.3);
+            color: var(--ak-red);
+            font-family: var(--ak-serif);
+            font-size: 12px;
+            display: none;
+        }
+        .ak-login__error.is-on { display: block; }
+
+        /* ===========================================================
+           APP SHELL (after login)
+           =========================================================== */
+        .ak-app { display: none; }
+        .ak-app.is-on {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
+        }
+
+        /* — Top bar — */
+        .ak-top {
+            background: rgba(247,244,238,0.96);
+            backdrop-filter: blur(20px) saturate(140%);
+            -webkit-backdrop-filter: blur(20px) saturate(140%);
+            border-bottom: 1px solid var(--line);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;       /* allow brand + actions to stack on narrow */
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 4px 18px -10px rgba(0,0,0,0.12);
+        }
+        @media (max-width: 700px) {
+            .ak-top {
+                padding: 12px 14px;
+                gap: 12px;
+                justify-content: center;        /* center on mobile per request */
+            }
+            .ak-brand { gap: 8px; }
+            .ak-top__actions { gap: 8px; justify-content: center; }
+            .ak-pill { padding: 5px 10px; font-size: 10px; }
+        }
+        .ak-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .ak-brand__name {
+            font-family: var(--ak-serif);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.42em;
+            text-transform: uppercase;
+            color: var(--ak-ink);
+        }
+        .ak-brand__role {
+            font-family: var(--ak-serif);
+            font-size: 11px;
+            letter-spacing: 0.32em;
+            color: var(--ak-mute);
+            padding: 3px 10px;
+            background: rgba(26,26,26,0.06);
+            border-radius: 999px;
+        }
+        .ak-top__actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .ak-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(26,26,26,0.05);
+            border-radius: 999px;
+            font-family: var(--ak-serif);
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ak-ink-soft);
+        }
+        .ak-pill__dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--ak-mute);
+        }
+        .ak-pill--ok .ak-pill__dot { background: var(--ak-green); }
+        .ak-pill--saving .ak-pill__dot { background: var(--ak-terracotta); animation: ak-pulse 1s infinite; }
+        @keyframes ak-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        .ak-btn {
+            padding: 9px 16px;
+            font-family: var(--ak-serif);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+            border: 1px solid var(--ak-ink);
+            background: transparent;
+            color: var(--ak-ink);
+            cursor: pointer;
+            transition: background 0.25s, color 0.25s, transform 0.25s;
+        }
+        .ak-btn:hover { background: rgba(26,26,26,0.06); }
+        .ak-btn:active { transform: scale(0.97); }
+        .ak-btn--primary {
+            background: var(--ak-ink);
+            color: var(--ak-cream);
+        }
+        .ak-btn--primary:hover {
+            background: var(--ak-terracotta-deep);
+            border-color: var(--ak-terracotta-deep);
+        }
+        .ak-btn--ghost { border-color: transparent; }
+        .ak-btn--danger {
+            border-color: var(--ak-red);
+            color: var(--ak-red);
+        }
+        .ak-btn--danger:hover {
+            background: var(--ak-red);
+            color: var(--ak-cream);
+        }
+        .ak-btn--sm { padding: 6px 10px; font-size: 10px; letter-spacing: 0.2em; }
+        .ak-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+
+        /* — Layout: sidebar + main — */
+        .ak-shell {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: calc(100vh - 60px);
+        }
+        @media (max-width: 768px) {
+            .ak-shell { grid-template-columns: 1fr; }
+            .ak-side { display: none; }
+        }
+
+        .ak-side {
+            background: rgba(247,244,238,0.78);
+            border-left: 1px solid var(--line);
+            padding: 22px 14px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .ak-side__group {
+            margin-bottom: 20px;
+        }
+        .ak-side__h {
+            font-family: var(--ak-serif);
+            font-size: 9px;
+            letter-spacing: 0.36em;
+            text-transform: uppercase;
+            color: var(--ak-mute);
+            padding: 6px 12px;
+            margin-bottom: 4px;
+        }
+        .ak-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            font-family: var(--ak-serif);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            color: var(--ak-ink-soft);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: right;
+            transition: background 0.25s, color 0.25s;
+            border-radius: 4px;
+        }
+        .ak-nav-item:hover { background: rgba(26,26,26,0.05); color: var(--ak-ink); }
+        .ak-nav-item.is-active {
+            background: var(--ak-ink);
+            color: var(--ak-cream);
+        }
+        .ak-nav-item.is-active:hover { background: var(--ak-ink); }
+        .ak-nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .ak-nav-item__count {
+            margin-right: auto;
+            font-size: 10px;
+            letter-spacing: 0.16em;
+            opacity: 0.7;
+            font-weight: 400;
+        }
+
+        /* mobile bottom nav */
+        .ak-mob-nav { display: none; }
+        @media (max-width: 768px) {
+            .ak-mob-nav {
+                display: flex;
+                position: sticky;
+                bottom: 0;
+                background: var(--ak-cream);
+                border-top: 1px solid var(--line);
+                z-index: 90;
+                /* IMPORTANT: prevent flex children from forcing wider parent */
+                min-width: 0;
+                width: 100%;
+            }
+            .ak-mob-nav .ak-nav-item {
+                /* Override desktop's `width: 100%` which, with 4 siblings,
+                   would force the nav to be 4× viewport. */
+                width: auto;
+                min-width: 0;
+                flex: 1 1 0;
+                flex-direction: column;
+                gap: 4px;
+                font-size: 10px;
+                letter-spacing: 0.12em;
+                border-radius: 0;
+                padding: 9px 4px;
+                text-align: center;
+            }
+            .ak-mob-nav .ak-nav-item.is-active {
+                background: transparent;
+                color: var(--ak-terracotta-deep);
+                border-top: 2px solid var(--ak-terracotta-deep);
+                margin-top: -2px;
+            }
+            /* Keep grid items from expanding beyond viewport */
+            .ak-shell { min-width: 0; }
+            .ak-shell > * { min-width: 0; }
+        }
+
+        .ak-main {
+            padding: 24px 28px;
+            max-width: 1280px;
+            width: 100%;
+        }
+        @media (max-width: 600px) { .ak-main { padding: 18px 14px; } }
+
+        /* — Page header — */
+        .ak-pg__head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 22px;
+            flex-wrap: wrap;
+        }
+        .ak-pg__title {
+            font-family: var(--ak-display);
+            font-size: 40px;
+            color: var(--ak-ink);
+            letter-spacing: 0.04em;
+        }
+        .ak-pg__sub {
+            font-family: var(--ak-serif);
+            font-style: italic;
+            font-size: 14px;
+            color: var(--ak-ink-soft);
+            margin-top: -4px;
+        }
+
+        /* — Cards — */
+        .ak-card {
+            background: rgba(255,255,255,0.94);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow-sm), 0 1px 0 rgba(255,255,255,0.7) inset;
+            padding: 20px;
+        }
+        .ak-card--inner { background: rgba(255,255,255,0.8); }
+
+        /* — Stat tiles — */
+        .ak-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 14px;
+            margin-bottom: 26px;
+        }
+        .ak-stat {
+            background: rgba(255,255,255,0.95);
+            border: 1px solid var(--line);
+            padding: 18px 20px;
+            box-shadow: var(--shadow-sm), 0 1px 0 rgba(255,255,255,0.7) inset;
+            position: relative;
+            overflow: hidden;
+        }
+        .ak-stat::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 80px; height: 80px;
+            background: radial-gradient(circle at 100% 0%, var(--ak-terracotta) 0%, transparent 60%);
+            opacity: 0.12;
+        }
+        .ak-stat__label {
+            font-family: var(--ak-serif);
+            font-size: 10px;
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+            color: var(--ak-mute);
+            margin-bottom: 8px;
+        }
+        .ak-stat__val {
+            font-family: var(--ak-serif);
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--ak-ink);
+            line-height: 1;
+        }
+        .ak-stat__hint {
+            margin-top: 6px;
+            font-family: var(--ak-serif);
+            font-size: 11px;
+            font-style: italic;
+            color: var(--ak-ink-soft);
+        }
+
+        /* — Sections — */
+        .ak-pages { position: relative; }
+        .ak-page { display: none; }
+        .ak-page.is-active { display: block; animation: ak-fade 0.35s ease; }
+        @keyframes ak-fade { from { opacity: 0; transform: translateY(8px); } to {opacity:1; transform:none;} }
+
+        /* — Toolbar — */
+        .ak-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+        .ak-search {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+            max-width: 360px;
+        }
+        .ak-search input {
+            width: 100%;
+            padding: 9px 14px 9px 40px;
+            font-family: var(--ak-serif);
+            font-size: 13px;
+            background: rgba(255,255,255,0.95);
+            border: 1px solid var(--line);
+            outline: none;
+            transition: border-color 0.25s;
+        }
+        .ak-search input:focus { border-color: var(--ak-ink); }
+        .ak-search svg {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: var(--ak-mute);
+            pointer-events: none;
+        }
+        .ak-chips {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .ak-chip {
+            padding: 6px 12px;
+            font-family: var(--ak-serif);
+            font-size: 11px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--ak-ink-soft);
+            background: rgba(255,255,255,0.85);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            transition: background 0.25s, color 0.25s;
+        }
+        .ak-chip:hover { background: rgba(26,26,26,0.06); color: var(--ak-ink); }
+        .ak-chip.is-active {
+            background: var(--ak-ink);
+            color: var(--ak-cream);
+            border-color: var(--ak-ink);
+        }
+        .ak-chip__count {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-right: 6px;
+        }
+        .ak-chip.is-active .ak-chip__count { opacity: 0.8; }
+
+        /* — Items grid — */
+        .ak-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+        }
+        .ak-item {
+            background: rgba(255,255,255,0.96);
+            border: 1px solid var(--line);
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s var(--ak-ease), box-shadow 0.3s var(--ak-ease);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        .ak-item:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+        .ak-item.is-selected {
+            outline: 2px solid var(--ak-terracotta-deep);
+            outline-offset: -2px;
+        }
+        .ak-item__img-wrap {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            background: rgba(0,0,0,0.04);
+        }
+        .ak-item__img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .ak-item__select {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.9);
+            border: 1px solid rgba(26,26,26,0.25);
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            z-index: 3;
+        }
+        .ak-item__select svg {
+            width: 14px; height: 14px;
+            stroke: var(--ak-ink);
+            opacity: 0;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+        .ak-item.is-selected .ak-item__select {
+            background: var(--ak-ink);
+            border-color: var(--ak-ink);
+        }
+        .ak-item.is-selected .ak-item__select svg {
+            stroke: var(--ak-cream);
+            opacity: 1;
+        }
+
+        .ak-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            padding: 3px 8px;
+            font-family: var(--ak-serif);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            background: var(--ak-cream);
+            color: var(--ak-ink);
+            border: 1px solid var(--line);
+            z-index: 2;
+        }
+        .ak-badge--sold { background: var(--ak-red); color: var(--ak-cream); border-color: var(--ak-red); }
+        .ak-badge--res  { background: var(--ak-teal); color: var(--ak-cream); border-color: var(--ak-teal); }
+        .ak-badge--feat { background: var(--ak-terracotta); color: var(--ak-ink); border-color: var(--ak-terracotta); }
+
+        .ak-item__body {
+            padding: 10px 12px 12px;
+        }
+        .ak-item__num {
+            font-family: var(--ak-serif);
+            font-size: 9px;
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+            color: var(--ak-mute);
+            margin-bottom: 2px;
+        }
+        .ak-item__title {
+            font-family: var(--ak-serif);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--ak-ink);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .ak-item__price {
+            font-family: var(--ak-serif);
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--ak-ink-soft);
+            direction: ltr;
+            text-align: right;
+        }
+        .ak-item__bar {
+            position: absolute;
+            bottom: 0;
+            left: 0; right: 0;
+            background: rgba(247,244,238,0.95);
+            display: flex;
+            transform: translateY(100%);
+            transition: transform 0.3s var(--ak-ease);
+            border-top: 1px solid var(--line);
+        }
+        .ak-item:hover .ak-item__bar { transform: translateY(0); }
+        .ak-item__bar button {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 9px;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            color: var(--ak-ink-soft);
+            transition: background 0.2s, color 0.2s;
+        }
+        .ak-item__bar button:hover { background: rgba(26,26,26,0.06); color: var(--ak-ink); }
+        .ak-item__bar button + button { border-right: 1px solid var(--line); }
+        .ak-item__bar svg { width: 14px; height: 14px; }
+        .ak-item__bar button.is-danger:hover { background: rgba(138,52,36,0.1); color: var(--ak-red); }
+
+        /* — Bulk action bar — */
+        .ak-bulk {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120%);
+            background: var(--ak-ink);
+            color: var(--ak-cream);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 18px 48px -10px rgba(0,0,0,0.6);
+            border-radius: 999px;
+            z-index: 200;
+            transition: transform 0.4s var(--ak-bounce);
+        }
+        .ak-bulk.is-on { transform: translateX(-50%) translateY(0); }
+        .ak-bulk__count {
+            font-family: var(--ak-serif);
+            font-size: 12px;
+            letter-spacing: 0.2em;
+            font-weight: 700;
+        }
+        .ak-bulk button {
+            padding: 6px 12px;
+            background: transparent;
+            color: var(--ak-cream);
+            border: 1px solid rgba(247,244,238,0.3);
+            cursor: pointer;
+            font-family: var(--ak-serif);
+            font-size: 10px;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            transition: background 0.25s;
+        }
+        .ak-bulk button:hover { background: rgba(247,244,238,0.15); }
+        .ak-bulk button.is-danger { color: #ffb9ad; border-color: rgba(255,185,173,0.4); }
+
+        /* — Edit drawer — */
+        .ak-drawer {
+            position: fixed;
+            inset: 0;
+            z-index: 700;
+            pointer-events: none;
+        }
+        .ak-drawer__veil {
+            position: absolute;
+            inset: 0;
+            background: rgba(8,6,4,0.5);
+            opacity: 0;
+            transition: opacity 0.35s ease;
+        }
+        .ak-drawer__panel {
+            position: absolute;
+            top: 0; bottom: 0;
+            left: 0;
+            width: min(540px, 100%);
+            background:
+                radial-gradient(circle at 50% 0%, rgba(255,248,232,0.6), transparent 60%),
+                linear-gradient(180deg, #f3eee0 0%, #ece6d7 100%);
+            transform: translateX(-100%);
+            transition: transform 0.5s var(--ak-ease);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 12px 0 40px -10px rgba(0,0,0,0.4);
+        }
+        .ak-drawer.is-open { pointer-events: auto; }
+        .ak-drawer.is-open .ak-drawer__veil { opacity: 1; }
+        .ak-drawer.is-open .ak-drawer__panel { transform: translateX(0); }
+        .ak-drawer__head {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(247,244,238,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .ak-drawer__title {
+            font-family: var(--ak-serif);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.36em;
+            text-transform: uppercase;
+        }
+        .ak-drawer__close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: transparent;
+            border: 1px solid var(--line);
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: background 0.3s, transform 0.4s var(--ak-bounce);
+        }
+        .ak-drawer__close:hover { background: rgba(26,26,26,0.08); transform: rotate(90deg); }
+        .ak-drawer__body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+        }
+        .ak-drawer__foot {
+            padding: 14px 24px;
+            border-top: 1px solid var(--line);
+            background: rgba(247,244,238,0.92);
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        /* — Form fields — */
+        .ak-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 14px;
+        }
+        .ak-field label {
+            font-family: var(--ak-serif);
+            font-size: 10px;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--ak-ink-soft);
+        }
+        .ak-field input,
+        .ak-field select,
+        .ak-field textarea {
+            font-family: var(--ak-serif);
+            font-size: 14px;
+            color: var(--ak-ink);
+            padding: 10px 13px;
+            background: rgba(255,255,255,0.95);
+            border: 1px solid var(--line);
+            outline: none;
+            transition: border-color 0.25s, background 0.25s;
+            font-weight: 400;
+        }
+        .ak-field input[dir="ltr"] { text-align: right; }
+        .ak-field input:focus,
+        .ak-field select:focus,
+        .ak-field textarea:focus {
+            border-color: var(--ak-ink);
+            background: #fff;
+        }
+        .ak-field textarea { resize: vertical; min-height: 70px; font-family: var(--ak-serif); }
+        .ak-field__hint {
+            font-family: var(--ak-serif);
+            font-style: italic;
+            font-size: 11px;
+            color: var(--ak-mute);
+        }
+        .ak-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        @media (max-width: 540px) { .ak-row { grid-template-columns: 1fr; } }
+
+        /* — Status toggle — */
+        .ak-toggle {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            border: 1px solid var(--line);
+            background: rgba(255,255,255,0.92);
+        }
+        .ak-toggle button {
+            padding: 9px 8px;
+            background: transparent;
+            border: none;
+            font-family: var(--ak-serif);
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ak-ink-soft);
+            cursor: pointer;
+            transition: background 0.25s, color 0.25s;
+        }
+        .ak-toggle button + button { border-right: 1px solid var(--line); }
+        .ak-toggle button:hover { background: rgba(26,26,26,0.04); }
+        .ak-toggle button.is-on {
+            background: var(--ak-ink);
+            color: var(--ak-cream);
+        }
+        .ak-toggle button.is-on[data-val="sold"] { background: var(--ak-red); }
+        .ak-toggle button.is-on[data-val="reserved"] { background: var(--ak-teal); }
+
+        /* — Switch — */
+        .ak-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .ak-switch__track {
+            width: 38px;
+            height: 22px;
+            background: rgba(26,26,26,0.18);
+            border-radius: 999px;
+            position: relative;
+            transition: background 0.3s;
+        }
+        .ak-switch__track::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 18px;
+            height: 18px;
+            background: var(--ak-cream);
+            border-radius: 50%;
+            transition: transform 0.3s var(--ak-bounce);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .ak-switch input { display: none; }
+        .ak-switch input:checked + .ak-switch__track { background: var(--ak-terracotta-deep); }
+        .ak-switch input:checked + .ak-switch__track::after { transform: translateX(-16px); }
+        .ak-switch__label {
+            font-family: var(--ak-serif);
+            font-size: 13px;
+            color: var(--ak-ink);
+        }
+
+        /* — Image upload zone — */
+        .ak-drop {
+            border: 2px dashed rgba(26,26,26,0.25);
+            background: rgba(255,255,255,0.78);
+            padding: 18px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.25s, background 0.25s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .ak-drop:hover, .ak-drop.is-over {
+            border-color: var(--ak-terracotta-deep);
+            background: rgba(200,146,116,0.1);
+        }
+        .ak-drop__preview {
+            max-width: 100%;
+            max-height: 240px;
+            object-fit: contain;
+            background: #fff;
+            padding: 6px;
+            border: 1px solid var(--line);
+        }
+        .ak-drop__cta {
+            font-family: var(--ak-serif);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            color: var(--ak-ink);
+        }
+        .ak-drop__hint {
+            font-family: var(--ak-serif);
+            font-style: italic;
+            font-size: 11px;
+            color: var(--ak-mute);
+        }
+
+        /* — Empty state — */
+        .ak-empty {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--ak-mute);
+        }
+        .ak-empty svg {
+            width: 64px;
+            height: 64px;
+            opacity: 0.3;
+            margin-bottom: 16px;
+        }
+        .ak-empty__h {
+            font-family: var(--ak-serif);
+            font-size: 14px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ak-ink-soft);
+            margin-bottom: 6px;
+        }
+        .ak-empty__p {
+            font-family: var(--ak-serif);
+            font-style: italic;
+            font-size: 13px;
+            color: var(--ak-mute);
+        }
+
+        /* — Settings — */
+        .ak-section {
+            margin-bottom: 28px;
+            padding-bottom: 22px;
+            border-bottom: 1px solid var(--line);
+        }
+        .ak-section:last-child { border-bottom: 0; }
+        .ak-section__h {
+            font-family: var(--ak-serif);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.36em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            color: var(--ak-ink);
+        }
+        .ak-section__sub {
+            font-family: var(--ak-serif);
+            font-style: italic;
+            color: var(--ak-mute);
+            font-size: 12px;
+            margin-bottom: 16px;
+        }
+
+        /* — Orders table — */
+        .ak-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.94);
+            font-family: var(--ak-serif);
+        }
+        .ak-table th, .ak-table td {
+            padding: 11px 12px;
+            text-align: right;
+            border-bottom: 1px solid var(--line);
+            font-size: 13px;
+        }
+        .ak-table th {
+            font-weight: 700;
+            font-size: 10px;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--ak-mute);
+            background: rgba(247,244,238,0.5);
+        }
+        .ak-table tr { transition: background 0.2s; }
+        .ak-table tbody tr:hover { background: rgba(26,26,26,0.03); cursor: pointer; }
+        .ak-mono { font-family: var(--ak-sans); direction: ltr; text-align: right; font-size: 12px; }
+
+        /* — Toast — */
+        .ak-toast {
+            position: fixed;
+            top: 76px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-12px);
+            background: var(--ak-ink);
+            color: var(--ak-cream);
+            padding: 10px 22px;
+            font-family: var(--ak-serif);
+            font-size: 12px;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            box-shadow: var(--shadow-md);
+            z-index: 950;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.45s var(--ak-bounce);
+        }
+        .ak-toast.is-on { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .ak-toast.is-err { background: var(--ak-red); }
+
+        /* — Confirm modal — */
+        .ak-confirm {
+            position: fixed;
+            inset: 0;
+            z-index: 9000;
+            background: rgba(8,6,4,0.6);
+            backdrop-filter: blur(6px);
+            display: grid;
+            place-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+        .ak-confirm.is-on { opacity: 1; pointer-events: auto; }
+        .ak-confirm__box {
+            width: min(420px, 100%);
+            background: var(--ak-cream);
+            padding: 26px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(20px) scale(0.97);
+            transition: transform 0.4s var(--ak-bounce);
+        }
+        .ak-confirm.is-on .ak-confirm__box { transform: none; }
+        .ak-confirm__h {
+            font-family: var(--ak-serif);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--ak-ink);
+            margin-bottom: 8px;
+        }
+        .ak-confirm__p {
+            font-family: var(--ak-serif);
+            color: var(--ak-ink-soft);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .ak-confirm__btns { display: flex; gap: 8px; justify-content: center; }
+
+        /* — Help — */
+        .ak-help-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 14px;
+        }
+        .ak-kbd {
+            font-family: var(--ak-sans);
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(26,26,26,0.08);
+            border: 1px solid var(--line);
+            border-bottom-width: 2px;
+            padding: 1px 6px;
+            border-radius: 3px;
+        }
+
+        /* — Activity strip — */
+        .ak-strip {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+        .ak-strip::-webkit-scrollbar { height: 6px; }
+        .ak-strip::-webkit-scrollbar-thumb { background: rgba(26,26,26,0.2); }
+        .ak-strip__item {
+            flex-shrink: 0;
+            width: 90px;
+            cursor: pointer;
+            transition: transform 0.25s;
+        }
+        .ak-strip__item:hover { transform: translateY(-2px); }
+        .ak-strip__item img {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            background: rgba(0,0,0,0.04);
+            display: block;
+        }
+        .ak-strip__item span {
+            display: block;
+            text-align: center;
+            font-family: var(--ak-serif);
+            font-size: 9px;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            color: var(--ak-mute);
+            padding-top: 4px;
+        }
+
+        /* — Order detail — */
+        .ak-order-line {
+            display: grid;
+            grid-template-columns: 56px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed var(--line);
+        }
+        .ak-order-line img {
+            width: 56px; height: 56px; object-fit: cover;
+            background: #fff; padding: 3px; border: 1px solid var(--line);
+        }
+        .ak-order-line__info {
+            font-family: var(--ak-serif);
+        }
+        .ak-order-line__num {
+            font-size: 9px;
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+            color: var(--ak-mute);
+        }
+        .ak-order-line__title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--ak-ink);
+        }
+        .ak-order-line__price {
+            font-family: var(--ak-serif);
+            font-weight: 700;
+            color: var(--ak-ink-soft);
+        }
+    
+        /* ───── mobile polish ───── */
+        @media (max-width: 700px) {
+            .ak-top__brand { font-size: 13px; }
+            .ak-section__h, .ak-section__sub { text-align: center; }
+            .ak-empty { text-align: center; }
+            /* tap targets */
+            .ak-icon-btn, .ak-tag, .ak-chip { min-height: 38px; }
+            /* table: hide secondary columns */
+            .ak-table th:nth-child(4), .ak-table td:nth-child(4) { display: none; }
+            /* drawer: full-bleed on tiny screens */
+            .ak-drawer { max-width: 100vw; }
+            /* prevent overflow from long emails */
+            .ak-table td { word-break: break-word; }
+        }
+        /* broken-image marker */
+        .ak-item__img--broken {
+            background:
+                repeating-linear-gradient(45deg,
+                    rgba(0,0,0,0.04) 0 8px,
+                    rgba(0,0,0,0.08) 8px 16px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== LOGIN ==================== -->
+    <div class="ak-login" id="login">
+        <div class="ak-login__card">
+            <div class="ak-login__brand">ALAKIR</div>
+            <div class="ak-login__sub">Admin Console</div>
+            <form id="login-form">
+                <div class="ak-login__field">
+                    <label for="login-pw">סיסמה · Password</label>
+                    <input type="password" id="login-pw" autocomplete="current-password" autofocus>
+                </div>
+                <div class="ak-login__error" id="login-err">סיסמה שגויה</div>
+                <button class="ak-login__btn" type="submit">כניסה · Sign in</button>
+            </form>
+            <p class="ak-login__hint">
+                סיסמת ברירת מחדל: <code>alakir2026</code><br>
+                אפשר לשנות בהגדרות לאחר ההתחברות.
+            </p>
+        </div>
+    </div>
+
+    <!-- ==================== APP ==================== -->
+    <div class="ak-app" id="app">
+
+        <!-- Top bar -->
+        <header class="ak-top">
+            <div class="ak-brand">
+                <span class="ak-brand__name">ALAKIR</span>
+                <span class="ak-brand__role">Admin</span>
+            </div>
+            <div class="ak-top__actions">
+                <span class="ak-pill" id="mode-pill">
+                    <span class="ak-pill__dot"></span>
+                    <span id="mode-label">מקומי · Local</span>
+                </span>
+                <span class="ak-pill ak-pill--ok" id="save-pill" style="display:none">
+                    <span class="ak-pill__dot"></span>
+                    <span id="save-label">נשמר</span>
+                </span>
+                <a class="ak-btn ak-btn--sm" href="./gallery.html" target="_blank">צפה בגלריה ↗</a>
+                <button class="ak-btn ak-btn--sm" type="button" id="logout-btn">יציאה</button>
+            </div>
+        </header>
+
+        <div class="ak-shell">
+            <!-- Sidebar -->
+            <aside class="ak-side">
+                <div class="ak-side__group">
+                    <div class="ak-side__h">ניהול</div>
+                    <button class="ak-nav-item is-active" data-view="dashboard" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="9"/>
+                            <rect x="14" y="3" width="7" height="5"/>
+                            <rect x="14" y="12" width="7" height="9"/>
+                            <rect x="3" y="16" width="7" height="5"/>
+                        </svg>
+                        <span>לוח בקרה</span>
+                    </button>
+                    <button class="ak-nav-item" data-view="items" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7"/>
+                            <rect x="14" y="3" width="7" height="7"/>
+                            <rect x="14" y="14" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/>
+                        </svg>
+                        <span>יצירות</span>
+                        <span class="ak-nav-item__count" id="nav-items-count">0</span>
+                    </button>
+                    <button class="ak-nav-item" data-view="orders" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h2.5l3 11h10l2.5-8H7.5"/>
+                            <circle cx="10" cy="20" r="1.5" fill="currentColor"/>
+                            <circle cx="17" cy="20" r="1.5" fill="currentColor"/>
+                        </svg>
+                        <span>הזמנות</span>
+                        <span class="ak-nav-item__count" id="nav-orders-count">0</span>
+                    </button>
+                </div>
+                <div class="ak-side__group">
+                    <div class="ak-side__h">תצורה</div>
+                    <button class="ak-nav-item" data-view="settings" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        <span>הגדרות</span>
+                    </button>
+                    <button class="ak-nav-item" data-view="help" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        <span>עזרה</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main -->
+            <main class="ak-main">
+                <div class="ak-pages">
+
+                    <!-- ===== Dashboard ===== -->
+                    <section class="ak-page is-active" data-view="dashboard">
+                        <div class="ak-pg__head">
+                            <div>
+                                <h1 class="ak-pg__title">לוח בקרה</h1>
+                                <p class="ak-pg__sub">סקירה כללית · Overview</p>
+                            </div>
+                            <div style="display:flex;gap:8px">
+                                <button class="ak-btn ak-btn--sm" id="dash-export">ייצוא נתונים</button>
+                                <button class="ak-btn ak-btn--sm ak-btn--primary" id="dash-add">+ יצירה חדשה</button>
+                            </div>
+                        </div>
+
+                        <div class="ak-stats">
+                            <div class="ak-stat">
+                                <div class="ak-stat__label">סה"כ יצירות</div>
+                                <div class="ak-stat__val" id="stat-total">—</div>
+                                <div class="ak-stat__hint">בקטלוג</div>
+                            </div>
+                            <div class="ak-stat">
+                                <div class="ak-stat__label">זמינות</div>
+                                <div class="ak-stat__val" id="stat-available">—</div>
+                                <div class="ak-stat__hint">למכירה</div>
+                            </div>
+                            <div class="ak-stat">
+                                <div class="ak-stat__label">נמכרו</div>
+                                <div class="ak-stat__val" id="stat-sold">—</div>
+                                <div class="ak-stat__hint">+ שמורות</div>
+                            </div>
+                            <div class="ak-stat">
+                                <div class="ak-stat__label">שווי קטלוג</div>
+                                <div class="ak-stat__val ak-mono" id="stat-value">—</div>
+                                <div class="ak-stat__hint">ש"ח · זמינות</div>
+                            </div>
+                        </div>
+
+                        <div class="ak-card" style="margin-bottom:20px">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                                <span class="ak-section__h">8 יצירות אחרונות</span>
+                                <button class="ak-btn ak-btn--sm ak-btn--ghost" data-view="items" type="button">צפה בכולן ←</button>
+                            </div>
+                            <div class="ak-strip" id="dash-strip"></div>
+                        </div>
+
+                        <div class="ak-card">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                                <span class="ak-section__h">הזמנות אחרונות</span>
+                                <button class="ak-btn ak-btn--sm ak-btn--ghost" data-view="orders" type="button">לכל ההזמנות ←</button>
+                            </div>
+                            <div id="dash-orders"></div>
+                        </div>
+                    </section>
+
+                    <!-- ===== Items ===== -->
+                    <section class="ak-page" data-view="items">
+                        <div class="ak-pg__head">
+                            <div>
+                                <h1 class="ak-pg__title">יצירות</h1>
+                                <p class="ak-pg__sub">ניהול הקטלוג · Manage catalog</p>
+                            </div>
+                            <button class="ak-btn ak-btn--primary" id="items-add" type="button">+ יצירה חדשה</button>
+                        </div>
+
+                        <div class="ak-toolbar">
+                            <label class="ak-search">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>
+                                </svg>
+                                <input type="search" id="items-search" placeholder="חיפוש לפי N° או כותרת...">
+                            </label>
+                            <div class="ak-chips" id="items-filter">
+                                <button class="ak-chip is-active" data-filter="all" type="button">הכל <span class="ak-chip__count" data-count="all"></span></button>
+                                <button class="ak-chip" data-filter="available" type="button">זמין <span class="ak-chip__count" data-count="available"></span></button>
+                                <button class="ak-chip" data-filter="sold" type="button">נמכר <span class="ak-chip__count" data-count="sold"></span></button>
+                                <button class="ak-chip" data-filter="reserved" type="button">שמור <span class="ak-chip__count" data-count="reserved"></span></button>
+                                <button class="ak-chip" data-filter="featured" type="button">מומלץ <span class="ak-chip__count" data-count="featured"></span></button>
+                            </div>
+                            <select class="ak-btn" id="items-sort" style="font-family:var(--ak-serif)">
+                                <option value="num-asc">מיון: מספר עולה</option>
+                                <option value="num-desc">מספר יורד</option>
+                                <option value="price-asc">מחיר נמוך → גבוה</option>
+                                <option value="price-desc">מחיר גבוה → נמוך</option>
+                                <option value="status">סטטוס</option>
+                            </select>
+                        </div>
+
+                        <div class="ak-items" id="items-grid"></div>
+                        <div class="ak-empty" id="items-empty" style="display:none">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+                                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                                <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                            </svg>
+                            <div class="ak-empty__h">אין תוצאות</div>
+                            <div class="ak-empty__p">נסו לשנות את החיפוש או הסינון</div>
+                        </div>
+                    </section>
+
+                    <!-- ===== Orders ===== -->
+                    <section class="ak-page" data-view="orders">
+                        <div class="ak-pg__head">
+                            <div>
+                                <h1 class="ak-pg__title">הזמנות</h1>
+                                <p class="ak-pg__sub">היסטוריית רכישות · Order history</p>
+                            </div>
+                            <button class="ak-btn ak-btn--sm" id="orders-export" type="button">ייצוא CSV</button>
+                        </div>
+                        <div id="orders-content"></div>
+                    </section>
+
+                    <!-- ===== Settings ===== -->
+                    <section class="ak-page" data-view="settings">
+                        <div class="ak-pg__head">
+                            <div>
+                                <h1 class="ak-pg__title">הגדרות</h1>
+                                <p class="ak-pg__sub">תצורת הגלריה והתשלום</p>
+                            </div>
+                            <button class="ak-btn ak-btn--primary" id="settings-save" type="button">שמור שינויים</button>
+                        </div>
+
+                        <div class="ak-card">
+                            <!-- Gallery info -->
+                            <div class="ak-section">
+                                <div class="ak-section__h">פרטי גלריה</div>
+                                <div class="ak-section__sub">טקסטים בעמוד הגלריה הראשי</div>
+                                <div class="ak-row">
+                                    <div class="ak-field">
+                                        <label for="s-title">כותרת ראשית</label>
+                                        <input type="text" id="s-title">
+                                    </div>
+                                    <div class="ak-field">
+                                        <label for="s-eyebrow">Eyebrow</label>
+                                        <input type="text" id="s-eyebrow" dir="ltr">
+                                    </div>
+                                </div>
+                                <div class="ak-row">
+                                    <div class="ak-field">
+                                        <label for="s-subtitle">תת־כותרת</label>
+                                        <input type="text" id="s-subtitle">
+                                    </div>
+                                    <div class="ak-field">
+                                        <label for="s-rule">חתימה</label>
+                                        <input type="text" id="s-rule" dir="ltr">
+                                    </div>
+                                </div>
+                                <div class="ak-row">
+                                    <div class="ak-field">
+                                        <label for="s-artist">שם אמן</label>
+                                        <input type="text" id="s-artist" dir="ltr">
+                                    </div>
+                                    <div class="ak-field">
+                                        <label for="s-year">שנה</label>
+                                        <input type="number" id="s-year" dir="ltr">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Display -->
+                            <div class="ak-section">
+                                <div class="ak-section__h">תצוגה</div>
+                                <div class="ak-section__sub">איך הגלריה מציגה יצירות</div>
+                                <div style="display:flex;flex-direction:column;gap:10px">
+                                    <label class="ak-switch">
+                                        <input type="checkbox" id="s-featured-first">
+                                        <span class="ak-switch__track"></span>
+                                        <span class="ak-switch__label">הצג יצירות מומלצות בראש הגלריה</span>
+                                    </label>
+                                    <label class="ak-switch">
+                                        <input type="checkbox" id="s-sold-ribbon">
+                                        <span class="ak-switch__track"></span>
+                                        <span class="ak-switch__label">סרט "נמכר" על יצירות שנמכרו</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Payment -->
+                            <div class="ak-section">
+                                <div class="ak-section__h">תשלום וסליקה · iCount</div>
+                                <div class="ak-section__sub">חיבור לעמוד סליקה של iCount — לא נדרש שרת</div>
+                                <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+                                    <label class="ak-switch">
+                                        <input type="checkbox" id="s-demo">
+                                        <span class="ak-switch__track"></span>
+                                        <span class="ak-switch__label">מצב הדגמה (ללא חיוב אמיתי)</span>
+                                    </label>
+                                </div>
+                                <div class="ak-field">
+                                    <label for="s-icount-code">קוד עמוד סליקה ב-iCount</label>
+                                    <input type="text" id="s-icount-code" placeholder="לדוגמה: UN9P" dir="ltr">
+                                    <span class="ak-field__hint">החלק שאחרי <code style="background:rgba(26,26,26,0.08);padding:1px 4px">icount.co.il/m/</code> בכתובת עמוד הסליקה שלך</span>
+                                </div>
+                                <div class="ak-field">
+                                    <label for="s-icount-url">או: כתובת מלאה של עמוד סליקה (אופציונלי)</label>
+                                    <input type="text" id="s-icount-url" dir="ltr" placeholder="https://www.icount.co.il/m/UN9P">
+                                    <span class="ak-field__hint">מלא רק אם יש לך URL מותאם — אחרת השאר ריק</span>
+                                </div>
+                                <div class="ak-field">
+                                    <label for="s-shipping">דמי משלוח</label>
+                                    <input type="number" id="s-shipping" dir="ltr" min="0">
+                                    <span class="ak-field__hint">ש"ח · 0 = משלוח חינם</span>
+                                </div>
+                                <div class="ak-field__hint" style="margin-top:8px;padding:10px 12px;background:rgba(46,114,143,0.08);border-right:3px solid var(--ak-teal)">
+                                    💡 <strong>מה לעשות ב-iCount:</strong> לאחר יצירת עמוד הסליקה, היכנסו להגדרות העמוד והגדירו את כתובת ההפניה אחרי תשלום ל:
+                                    <code style="display:block;margin-top:4px;background:rgba(255,255,255,0.6);padding:6px 8px;font-size:11px" dir="ltr">https://YOUR-DOMAIN.com/gallery.html?paid=ok</code>
+                                </div>
+                            </div>
+
+                            <!-- Security -->
+                            <div class="ak-section">
+                                <div class="ak-section__h">אבטחה</div>
+                                <div class="ak-section__sub">סיסמת ניהול</div>
+                                <div class="ak-row">
+                                    <div class="ak-field">
+                                        <label for="s-pw1">סיסמה חדשה</label>
+                                        <input type="password" id="s-pw1" dir="ltr" placeholder="השאירו ריק לשמירת הסיסמה הנוכחית">
+                                    </div>
+                                    <div class="ak-field">
+                                        <label for="s-pw2">אישור סיסמה</label>
+                                        <input type="password" id="s-pw2" dir="ltr">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Data -->
+                            <div class="ak-section">
+                                <div class="ak-section__h">ניהול נתונים</div>
+                                <div class="ak-section__sub">ייצוא, ייבוא ואיפוס</div>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                    <button class="ak-btn ak-btn--sm" id="data-export" type="button">⬇ הורד JSON</button>
+                                    <button class="ak-btn ak-btn--sm" id="data-export-zip" type="button">⬇ הורד חבילה (ZIP)</button>
+                                    <button class="ak-btn ak-btn--sm" id="data-import" type="button">⬆ העלה JSON</button>
+                                    <button class="ak-btn ak-btn--sm ak-btn--danger" id="data-reset" type="button">איפוס לברירת מחדל</button>
+                                </div>
+                                <input type="file" id="import-file" accept="application/json" style="display:none">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ===== Help ===== -->
+                    <section class="ak-page" data-view="help">
+                        <div class="ak-pg__head">
+                            <div>
+                                <h1 class="ak-pg__title">עזרה</h1>
+                                <p class="ak-pg__sub">מדריך מהיר · Quick guide</p>
+                            </div>
+                        </div>
+                        <div class="ak-help-grid">
+                            <div class="ak-card">
+                                <div class="ak-section__h" style="margin-bottom:10px">איך זה עובד</div>
+                                <p style="font-family:var(--ak-serif);font-size:13px;line-height:1.7;color:var(--ak-ink-soft)">
+                                    כל שינוי כאן — מחיר, סטטוס, תמונה — נשמר אוטומטית ומופיע מיד בעמוד הגלריה.
+                                    אין צורך לשמור ידנית מלבד בעמוד ההגדרות.
+                                </p>
+                            </div>
+                            <div class="ak-card">
+                                <div class="ak-section__h" style="margin-bottom:10px">קיצורי מקלדת</div>
+                                <p style="font-family:var(--ak-serif);font-size:13px;line-height:1.9;color:var(--ak-ink-soft)">
+                                    <span class="ak-kbd">Esc</span> — סגירת חלון<br>
+                                    <span class="ak-kbd">Cmd/Ctrl + S</span> — שמירה<br>
+                                    <span class="ak-kbd">/</span> — מיקוד בחיפוש
+                                </p>
+                            </div>
+                            <div class="ak-card">
+                                <div class="ak-section__h" style="margin-bottom:10px">מצבי הפעלה</div>
+                                <p style="font-family:var(--ak-serif);font-size:13px;line-height:1.7;color:var(--ak-ink-soft)">
+                                    <strong>Local</strong> — הנתונים נשמרים בדפדפן בלבד. מצוין לעבודה אישית.<br><br>
+                                    <strong>Server</strong> — שרת Node מאחורי הקלעים שומר את הנתונים בקובץ ומסונכרן בין מכשירים. ראה <code style="background:rgba(26,26,26,0.08);padding:1px 4px">DEPLOYMENT.md</code>.
+                                </p>
+                            </div>
+                            <div class="ak-card">
+                                <div class="ak-section__h" style="margin-bottom:10px">תמיכה בתשלומים</div>
+                                <p style="font-family:var(--ak-serif);font-size:13px;line-height:1.7;color:var(--ak-ink-soft)">
+                                    האתר מחובר ל-<strong>iCount</strong> — סליקה ישראלית עם חשבונית מס אוטומטית.<br>
+                                    תומך בויזה, מאסטרקרד, אמריקן אקספרס, ישראכרט, Apple Pay ו-Google Pay.<br>
+                                    ראה הוראות הפעלה ב-<code style="background:rgba(26,26,26,0.08);padding:1px 4px">DEPLOYMENT.md</code>.
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </main>
+        </div>
+
+        <!-- mobile bottom nav -->
+        <nav class="ak-mob-nav">
+            <button class="ak-nav-item is-active" data-view="dashboard" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/>
+                    <rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>
+                </svg>
+                <span>בקרה</span>
+            </button>
+            <button class="ak-nav-item" data-view="items" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                <span>יצירות</span>
+            </button>
+            <button class="ak-nav-item" data-view="orders" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h2.5l3 11h10l2.5-8H7.5"/>
+                    <circle cx="10" cy="20" r="1.5" fill="currentColor"/>
+                    <circle cx="17" cy="20" r="1.5" fill="currentColor"/>
+                </svg>
+                <span>הזמנות</span>
+            </button>
+            <button class="ak-nav-item" data-view="settings" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 2v3M12 19v3M5 12H2M22 12h-3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12"/>
+                </svg>
+                <span>הגדרות</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- ==================== EDIT/ADD DRAWER ==================== -->
+    <aside class="ak-drawer" id="drawer" aria-hidden="true">
+        <div class="ak-drawer__veil" data-drawer-close></div>
+        <div class="ak-drawer__panel" role="dialog" aria-modal="true">
+            <div class="ak-drawer__head">
+                <span class="ak-drawer__title" id="drawer-title">עריכת יצירה</span>
+                <button class="ak-drawer__close" type="button" data-drawer-close aria-label="סגור">✕</button>
+            </div>
+            <div class="ak-drawer__body">
+                <div class="ak-field">
+                    <label>תמונה</label>
+                    <div class="ak-drop" id="drop-zone">
+                        <img id="drop-preview" class="ak-drop__preview" style="display:none" alt="">
+                        <div id="drop-empty">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                            <div class="ak-drop__cta">גרור תמונה לכאן</div>
+                            <div class="ak-drop__hint">או לחץ לבחירת קובץ · JPG / PNG / WEBP · עד 8MB</div>
+                        </div>
+                        <input type="file" id="drop-input" accept="image/*" style="display:none">
+                    </div>
+                </div>
+                <div class="ak-row">
+                    <div class="ak-field">
+                        <label for="f-num">מספר N°</label>
+                        <input type="number" id="f-num" min="1" dir="ltr">
+                    </div>
+                    <div class="ak-field">
+                        <label for="f-price">מחיר (₪)</label>
+                        <input type="number" id="f-price" min="0" step="100" dir="ltr">
+                    </div>
+                </div>
+                <div class="ak-field">
+                    <label for="f-title">כותרת</label>
+                    <input type="text" id="f-title">
+                </div>
+                <div class="ak-row">
+                    <div class="ak-field">
+                        <label for="f-year">שנה</label>
+                        <input type="number" id="f-year" dir="ltr">
+                    </div>
+                    <div class="ak-field">
+                        <label for="f-medium">טכניקה</label>
+                        <input type="text" id="f-medium" list="mediums" dir="ltr">
+                        <datalist id="mediums">
+                            <option value="Mixed Media">
+                            <option value="Acrylic on Canvas">
+                            <option value="Oil on Canvas">
+                            <option value="Watercolor">
+                            <option value="Spray Paint">
+                            <option value="Mural">
+                            <option value="Charcoal">
+                            <option value="Digital Print">
+                        </datalist>
+                    </div>
+                </div>
+                <div class="ak-field">
+                    <label>סטטוס</label>
+                    <div class="ak-toggle" id="f-status">
+                        <button type="button" data-val="available">זמין</button>
+                        <button type="button" data-val="reserved">שמור</button>
+                        <button type="button" data-val="sold">נמכר</button>
+                    </div>
+                </div>
+                <div class="ak-field">
+                    <label class="ak-switch" style="margin:0">
+                        <input type="checkbox" id="f-featured">
+                        <span class="ak-switch__track"></span>
+                        <span class="ak-switch__label">סמן כיצירה מומלצת (Featured)</span>
+                    </label>
+                </div>
+                <div class="ak-field">
+                    <label for="f-desc">תיאור</label>
+                    <textarea id="f-desc" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="ak-drawer__foot">
+                <button class="ak-btn ak-btn--danger ak-btn--sm" type="button" id="f-delete" style="margin-left:auto">מחק</button>
+                <div style="display:flex;gap:8px">
+                    <button class="ak-btn ak-btn--sm" type="button" data-drawer-close>ביטול</button>
+                    <button class="ak-btn ak-btn--primary ak-btn--sm" type="button" id="f-save">שמור</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ==================== ORDER DETAIL DRAWER ==================== -->
+    <aside class="ak-drawer" id="order-drawer" aria-hidden="true">
+        <div class="ak-drawer__veil" data-order-close></div>
+        <div class="ak-drawer__panel" role="dialog" aria-modal="true">
+            <div class="ak-drawer__head">
+                <span class="ak-drawer__title">פרטי הזמנה</span>
+                <button class="ak-drawer__close" type="button" data-order-close aria-label="סגור">✕</button>
+            </div>
+            <div class="ak-drawer__body" id="order-detail"></div>
+        </div>
+    </aside>
+
+    <!-- ==================== CONFIRM ==================== -->
+    <div class="ak-confirm" id="confirm" aria-hidden="true">
+        <div class="ak-confirm__box">
+            <div class="ak-confirm__h" id="confirm-title">בטוח?</div>
+            <p class="ak-confirm__p" id="confirm-msg">פעולה זו אינה הפיכה.</p>
+            <div class="ak-confirm__btns">
+                <button class="ak-btn ak-btn--sm" type="button" id="confirm-cancel">ביטול</button>
+                <button class="ak-btn ak-btn--sm ak-btn--danger" type="button" id="confirm-ok">אישור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="ak-toast" id="toast"></div>
+
+    <!-- ==================== APP LOGIC ==================== -->
+    <script>
+    (function () {
+
+        /* ============================================================
+           CONSTANTS & STATE
+           ============================================================ */
+        const LS_KEY        = 'alakir.galleryData';
+        const LS_AUTH       = 'alakir.adminAuth';
+        const LS_PWHASH     = 'alakir.adminPwHash';
+        const LS_ORDERS     = 'alakir.orders';
+        const IDB_NAME      = 'alakir-images';
+        const DEFAULT_PW    = 'alakir2026';
+        const SESSION_HOURS = 24;
+
+        let DATA = null;          // { settings, items, orders }
+        let SERVER_MODE = false;  // true if backend reachable
+        let editingId = null;     // currently editing item (null = new)
+        let pendingImageDataUrl = null; // staged image for current edit
+        let filterStatus = 'all';
+        let searchTerm = '';
+        let sortBy = 'num-asc';
+        let selectedIds = new Set();
+        let pendingConfirmAction = null;
+
+        const $  = sel => document.querySelector(sel);
+        const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+        /* ============================================================
+           UTILITIES
+           ============================================================ */
+        const ESC_MAP = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;', '/':'&#x2F;' };
+        function esc(v) {
+            if (v === null || v === undefined) return '';
+            return String(v).replace(/[&<>"'/]/g, c => ESC_MAP[c]);
+        }
+        // safe URL — refuses javascript:, data:, vbscript:, file: protocols
+        function safeUrl(u) {
+            if (!u) return '';
+            const s = String(u).trim();
+            if (/^\s*(javascript|data|vbscript|file):/i.test(s)) return '';
+            return esc(s);
+        }
+        function fmtILS(n) {
+            return '₪' + Math.round(Number(n) || 0).toLocaleString('he-IL');
+        }
+        function fmtDate(ts) {
+            const d = new Date(ts);
+            return d.toLocaleDateString('he-IL', {
+                year: 'numeric', month: 'numeric', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+        function uid() {
+            return Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+        }
+        async function sha256(str) {
+            const buf = new TextEncoder().encode(str);
+            const hash = await crypto.subtle.digest('SHA-256', buf);
+            return Array.from(new Uint8Array(hash))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        function toast(msg, type = '') {
+            const el = $('#toast');
+            el.textContent = msg;
+            el.classList.toggle('is-err', type === 'err');
+            el.classList.add('is-on');
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => el.classList.remove('is-on'), 1800);
+        }
+        function downloadFile(name, content, mime = 'application/json') {
+            const blob = (content instanceof Blob) ? content : new Blob([content], { type: mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        /* ============================================================
+           CONFIRM DIALOG (promise-based)
+           ============================================================ */
+        const confirmEl = $('#confirm');
+        function confirmDialog(title, msg) {
+            $('#confirm-title').textContent = title;
+            $('#confirm-msg').textContent = msg;
+            confirmEl.classList.add('is-on');
+            return new Promise(resolve => {
+                pendingConfirmAction = resolve;
+            });
+        }
+        $('#confirm-ok').addEventListener('click', () => {
+            confirmEl.classList.remove('is-on');
+            if (pendingConfirmAction) { pendingConfirmAction(true); pendingConfirmAction = null; }
+        });
+        $('#confirm-cancel').addEventListener('click', () => {
+            confirmEl.classList.remove('is-on');
+            if (pendingConfirmAction) { pendingConfirmAction(false); pendingConfirmAction = null; }
+        });
+        confirmEl.addEventListener('click', e => {
+            if (e.target === confirmEl) {
+                confirmEl.classList.remove('is-on');
+                if (pendingConfirmAction) { pendingConfirmAction(false); pendingConfirmAction = null; }
+            }
+        });
+
+        /* ============================================================
+           DATA LOAD / SAVE
+           ============================================================ */
+        async function detectServer() {
+            try {
+                const r = await fetch('./api/ping', { method: 'GET', cache: 'no-store' });
+                if (r.ok) {
+                    SERVER_MODE = true;
+                    return true;
+                }
+            } catch (_) {}
+            SERVER_MODE = false;
+            return false;
+        }
+
+        async function loadData() {
+            // Try server
+            if (SERVER_MODE) {
+                try {
+                    const r = await fetch('./api/data', { cache: 'no-store' });
+                    if (r.ok) return await r.json();
+                } catch (_) {}
+            }
+            // Try localStorage
+            try {
+                const raw = localStorage.getItem(LS_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch (_) {}
+            // Try the canonical JSON file (works on http servers without backend)
+            try {
+                const r = await fetch('./data/gallery-data.json', { cache: 'no-store' });
+                if (r.ok) return await r.json();
+            } catch (_) {}
+            // Last resort: empty default
+            return {
+                version: 1,
+                settings: defaultSettings(),
+                items: [],
+                orders: []
+            };
+        }
+
+        function defaultSettings() {
+            return {
+                title: 'THE WALL',
+                eyebrow: '2026 · Full Collection',
+                subtitle: 'כל העבודות · All Works',
+                rule: 'Alakir · 2026',
+                year: 2026,
+                artist: 'ALAKIR',
+                currency: 'ils',
+                currencySymbol: '₪',
+                shipping: 0,
+                icountPageCode: '',
+                icountPageUrl: '',
+                ordersEndpoint: '/api/orders',
+                saveEndpoint: '/api/save-data',
+                uploadEndpoint: '/api/upload',
+                demoMode: true,
+                soldRibbon: true,
+                showFeaturedFirst: true
+            };
+        }
+
+        let saveTimer = null;
+        function persist(opts = {}) {
+            // Always write to localStorage immediately
+            try {
+                localStorage.setItem(LS_KEY, JSON.stringify(DATA));
+            } catch (e) {
+                toast('שגיאה: localStorage מלא', 'err');
+                return;
+            }
+            // Optimistic UI: show "saving..."
+            const pill = $('#save-pill');
+            pill.style.display = '';
+            pill.classList.remove('ak-pill--ok');
+            pill.classList.add('ak-pill--saving');
+            $('#save-label').textContent = 'שומר...';
+
+            // Debounced server sync
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(async () => {
+                if (SERVER_MODE) {
+                    try {
+                        const r = await fetch('./api/save-data', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(DATA)
+                        });
+                        if (!r.ok) throw new Error('Server save failed');
+                    } catch (e) {
+                        pill.classList.remove('ak-pill--saving');
+                        $('#save-label').textContent = 'שגיאה בשמירה';
+                        toast('שמירה לשרת נכשלה', 'err');
+                        return;
+                    }
+                }
+                pill.classList.remove('ak-pill--saving');
+                pill.classList.add('ak-pill--ok');
+                $('#save-label').textContent = SERVER_MODE ? 'נשמר בשרת' : 'נשמר מקומית';
+                setTimeout(() => { pill.style.display = 'none'; }, 1500);
+            }, opts.immediate ? 0 : 400);
+        }
+
+        /* ============================================================
+           AUTH
+           ============================================================ */
+        async function checkAuth() {
+            try {
+                const sess = JSON.parse(localStorage.getItem(LS_AUTH) || 'null');
+                if (sess && sess.exp > Date.now()) return true;
+            } catch (_) {}
+            return false;
+        }
+
+        async function attemptLogin(password) {
+            const stored = localStorage.getItem(LS_PWHASH);
+            const expected = stored || await sha256(DEFAULT_PW);
+            const got = await sha256(password);
+            if (got === expected) {
+                const exp = Date.now() + SESSION_HOURS * 3600 * 1000;
+                localStorage.setItem(LS_AUTH, JSON.stringify({ exp }));
+                return true;
+            }
+            return false;
+        }
+
+        function logout() {
+            localStorage.removeItem(LS_AUTH);
+            location.reload();
+        }
+
+        $('#login-form').addEventListener('submit', async e => {
+            e.preventDefault();
+            const pw = $('#login-pw').value;
+            const ok = await attemptLogin(pw);
+            if (ok) {
+                $('#login').classList.add('is-hidden');
+                setTimeout(() => $('#login').remove(), 500);
+                $('#app').classList.add('is-on');
+                init();
+            } else {
+                $('#login-err').classList.add('is-on');
+                $('#login-pw').value = '';
+                $('#login-pw').focus();
+            }
+        });
+        $('#logout-btn').addEventListener('click', logout);
+
+        /* ============================================================
+           VIEW NAVIGATION
+           ============================================================ */
+        function setView(name) {
+            $$('.ak-page').forEach(p => p.classList.toggle('is-active', p.dataset.view === name));
+            $$('.ak-nav-item').forEach(n =>
+                n.classList.toggle('is-active', n.dataset.view === name));
+            if (name === 'dashboard') renderDashboard();
+            if (name === 'items')     renderItems();
+            if (name === 'orders')    renderOrders();
+            if (name === 'settings')  renderSettings();
+        }
+        document.addEventListener('click', e => {
+            const nav = e.target.closest('[data-view]');
+            if (nav && nav.dataset.view) {
+                setView(nav.dataset.view);
+            }
+        });
+
+        /* ============================================================
+           DASHBOARD
+           ============================================================ */
+        function renderDashboard() {
+            const items = DATA.items || [];
+            const total = items.length;
+            const available = items.filter(i => i.status === 'available').length;
+            const sold = items.filter(i => i.status === 'sold').length;
+            const reserved = items.filter(i => i.status === 'reserved').length;
+            const value = items.filter(i => i.status === 'available').reduce((s, i) => s + Number(i.price || 0), 0);
+
+            $('#stat-total').textContent     = total;
+            $('#stat-available').textContent = available;
+            $('#stat-sold').textContent      = sold + (reserved ? '+' + reserved : '');
+            $('#stat-value').textContent     = fmtILS(value);
+
+            $('#nav-items-count').textContent  = total;
+            $('#nav-orders-count').textContent = (DATA.orders || []).length;
+
+            // Recent strip
+            const recent = items.slice().sort((a, b) => (b.order || b.num) - (a.order || a.num)).slice(0, 8);
+            $('#dash-strip').innerHTML = recent.map(it => `
+                <div class="ak-strip__item" data-edit="${it.id}">
+                    <img src="${safeUrl(it.img)}" alt="" loading="lazy" onerror="this.style.opacity='0.2'">
+                    <span>N° ${String(it.num).padStart(2,'0')}</span>
+                </div>
+            `).join('');
+            $$('#dash-strip [data-edit]').forEach(el =>
+                el.addEventListener('click', () => openEdit(el.dataset.edit)));
+
+            // Recent orders
+            const orders = (DATA.orders || []).slice(-5).reverse();
+            if (orders.length === 0) {
+                $('#dash-orders').innerHTML = `
+                    <div class="ak-empty" style="padding:30px 20px">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+                            <path d="M3 6h2.5l3 11h10l2.5-8H7.5"/>
+                        </svg>
+                        <div class="ak-empty__h">עוד לא התקבלו הזמנות</div>
+                        <div class="ak-empty__p">הזמנות יופיעו כאן ברגע שיתקבלו</div>
+                    </div>`;
+            } else {
+                $('#dash-orders').innerHTML = `
+                    <table class="ak-table">
+                        <thead><tr><th>תאריך</th><th>הזמנה</th><th>לקוח</th><th>סכום</th></tr></thead>
+                        <tbody>${orders.map(o => `
+                            <tr data-order="${esc(o.id)}">
+                                <td>${fmtDate(o.ts)}</td>
+                                <td class="ak-mono">#${esc(o.id)}</td>
+                                <td>${esc((o.customer && o.customer.name) || '—')}</td>
+                                <td class="ak-mono">${fmtILS(o.total)}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>`;
+                $$('#dash-orders [data-order]').forEach(r =>
+                    r.addEventListener('click', () => openOrder(r.dataset.order)));
+            }
+        }
+        $('#dash-add').addEventListener('click', () => openEdit(null));
+        $('#dash-export').addEventListener('click', exportJSON);
+
+        /* ============================================================
+           ITEMS PAGE
+           ============================================================ */
+        $('#items-search').addEventListener('input', e => {
+            searchTerm = e.target.value.trim().toLowerCase();
+            renderItems();
+        });
+        $('#items-sort').addEventListener('change', e => {
+            sortBy = e.target.value;
+            renderItems();
+        });
+        $('#items-filter').addEventListener('click', e => {
+            const chip = e.target.closest('.ak-chip');
+            if (!chip) return;
+            $$('#items-filter .ak-chip').forEach(c => c.classList.remove('is-active'));
+            chip.classList.add('is-active');
+            filterStatus = chip.dataset.filter;
+            renderItems();
+        });
+        $('#items-add').addEventListener('click', () => openEdit(null));
+
+        function getFilteredItems() {
+            let list = (DATA.items || []).slice();
+            if (filterStatus === 'featured') list = list.filter(i => i.featured);
+            else if (filterStatus !== 'all') list = list.filter(i => i.status === filterStatus);
+            if (searchTerm) {
+                list = list.filter(i =>
+                    String(i.num).includes(searchTerm) ||
+                    (i.title || '').toLowerCase().includes(searchTerm));
+            }
+            const cmp = {
+                'num-asc':    (a, b) => (a.num) - (b.num),
+                'num-desc':   (a, b) => (b.num) - (a.num),
+                'price-asc':  (a, b) => a.price - b.price,
+                'price-desc': (a, b) => b.price - a.price,
+                'status':     (a, b) => (a.status || '').localeCompare(b.status || ''),
+            }[sortBy] || ((a, b) => a.num - b.num);
+            list.sort(cmp);
+            return list;
+        }
+
+        function renderItems() {
+            // Update filter counts
+            const items = DATA.items || [];
+            $$('#items-filter .ak-chip__count').forEach(c => {
+                const f = c.parentElement.dataset.filter;
+                let n;
+                if (f === 'all') n = items.length;
+                else if (f === 'featured') n = items.filter(i => i.featured).length;
+                else n = items.filter(i => i.status === f).length;
+                c.textContent = '· ' + n;
+            });
+
+            const list = getFilteredItems();
+            const grid  = $('#items-grid');
+            const empty = $('#items-empty');
+
+            if (list.length === 0) {
+                grid.innerHTML = '';
+                empty.style.display = '';
+                $('#bulk-bar')?.classList.remove('is-on');
+                return;
+            }
+            empty.style.display = 'none';
+
+            grid.innerHTML = list.map(it => {
+                const sel = selectedIds.has(it.id);
+                const badge =
+                    it.status === 'sold'     ? '<span class="ak-badge ak-badge--sold">נמכר</span>' :
+                    it.status === 'reserved' ? '<span class="ak-badge ak-badge--res">שמור</span>' :
+                    it.featured              ? '<span class="ak-badge ak-badge--feat">מומלץ</span>' :
+                                               '';
+                return `
+                <div class="ak-item ${sel ? 'is-selected' : ''}" data-id="${it.id}">
+                    <div class="ak-item__img-wrap">
+                        ${badge}
+                        <button class="ak-item__select" type="button" data-select="${it.id}" aria-label="בחר">
+                            <svg viewBox="0 0 24 24"><polyline points="5 12 10 17 19 7"/></svg>
+                        </button>
+                        <img class="ak-item__img" src="${safeUrl(it.img)}" alt="" loading="lazy" onerror="this.style.opacity='0.15';this.classList.add('ak-item__img--broken')">
+                    </div>
+                    <div class="ak-item__body">
+                        <div class="ak-item__num">N° ${String(it.num).padStart(2,'0')}</div>
+                        <div class="ak-item__title">${esc(it.title || '')}</div>
+                        <div class="ak-item__price">${fmtILS(it.price)}</div>
+                    </div>
+                    <div class="ak-item__bar">
+                        <button type="button" data-edit="${it.id}" aria-label="ערוך">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                            </svg>
+                        </button>
+                        <button type="button" data-toggle-sold="${it.id}" aria-label="סמן כנמכר">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 9"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="is-danger" data-del="${it.id}" aria-label="מחק">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                <path d="M10 11v6M14 11v6"/>
+                                <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Bind events
+            $$('[data-edit]', grid).forEach(b => b.addEventListener('click', e => {
+                e.stopPropagation();
+                openEdit(b.dataset.edit);
+            }));
+            $$('[data-select]', grid).forEach(b => b.addEventListener('click', e => {
+                e.stopPropagation();
+                toggleSelect(b.dataset.select);
+            }));
+            $$('[data-del]', grid).forEach(b => b.addEventListener('click', async e => {
+                e.stopPropagation();
+                if (await confirmDialog('למחוק?', 'פעולה זו אינה הפיכה.')) {
+                    deleteItem(b.dataset.del);
+                }
+            }));
+            $$('[data-toggle-sold]', grid).forEach(b => b.addEventListener('click', e => {
+                e.stopPropagation();
+                const it = DATA.items.find(i => i.id === b.dataset.toggleSold);
+                if (it) {
+                    it.status = (it.status === 'sold') ? 'available' : 'sold';
+                    persist();
+                    renderItems();
+                    renderDashboard();
+                    toast(it.status === 'sold' ? 'סומן כנמכר' : 'סומן כזמין');
+                }
+            }));
+            $$('.ak-item', grid).forEach(card => {
+                card.addEventListener('click', e => {
+                    if (e.target.closest('[data-edit],[data-del],[data-select],[data-toggle-sold]')) return;
+                    openEdit(card.dataset.id);
+                });
+            });
+
+            renderBulkBar();
+        }
+
+        function toggleSelect(id) {
+            if (selectedIds.has(id)) selectedIds.delete(id);
+            else selectedIds.add(id);
+            renderItems();
+        }
+        function clearSelect() { selectedIds.clear(); renderItems(); }
+
+        function renderBulkBar() {
+            const n = selectedIds.size;
+            let bar = $('#bulk-bar');
+            if (n === 0) {
+                if (bar) bar.classList.remove('is-on');
+                return;
+            }
+            if (!bar) {
+                bar = document.createElement('div');
+                bar.id = 'bulk-bar';
+                bar.className = 'ak-bulk';
+                bar.innerHTML = `
+                    <span class="ak-bulk__count" id="bulk-count">0 נבחרו</span>
+                    <button type="button" data-bulk="sold">סמן נמכר</button>
+                    <button type="button" data-bulk="available">סמן זמין</button>
+                    <button type="button" data-bulk="featured">סמן מומלץ</button>
+                    <button type="button" data-bulk="del" class="is-danger">מחק</button>
+                    <button type="button" data-bulk="cancel">ביטול</button>`;
+                document.body.appendChild(bar);
+                bar.addEventListener('click', async e => {
+                    const btn = e.target.closest('[data-bulk]');
+                    if (!btn) return;
+                    const op = btn.dataset.bulk;
+                    if (op === 'cancel') return clearSelect();
+                    if (op === 'del') {
+                        if (!await confirmDialog('למחוק את הנבחרות?', `${selectedIds.size} יצירות יוסרו לצמיתות.`)) return;
+                        DATA.items = DATA.items.filter(i => !selectedIds.has(i.id));
+                        clearSelect(); persist(); renderItems(); renderDashboard();
+                        toast('נמחקו'); return;
+                    }
+                    DATA.items.forEach(i => {
+                        if (selectedIds.has(i.id)) {
+                            if (op === 'featured') i.featured = !i.featured;
+                            else i.status = op;
+                        }
+                    });
+                    clearSelect(); persist(); renderItems(); renderDashboard();
+                    toast('עודכן');
+                });
+            }
+            $('#bulk-count').textContent = n + ' נבחרו';
+            bar.classList.add('is-on');
+        }
+
+        /* ============================================================
+           ITEM EDIT DRAWER
+           ============================================================ */
+        const drawer = $('#drawer');
+
+        function openEdit(id) {
+            editingId = id;
+            pendingImageDataUrl = null;
+            const item = id ? DATA.items.find(i => i.id === id) : null;
+            $('#drawer-title').textContent = item ? 'עריכת יצירה' : 'יצירה חדשה';
+            $('#f-delete').style.display = item ? '' : 'none';
+
+            // Compute next available N° for new items
+            let suggestedNum = 1;
+            if (!item) {
+                const nums = DATA.items.map(i => i.num).filter(n => Number.isFinite(n));
+                suggestedNum = nums.length ? Math.max(...nums) + 1 : 1;
+            }
+
+            $('#f-num').value     = item ? item.num : suggestedNum;
+            $('#f-price').value   = item ? item.price : 1800;
+            $('#f-title').value   = item ? (item.title || '') : ('יצירה N° ' + String(suggestedNum).padStart(2,'0'));
+            $('#f-year').value    = item ? (item.year || 2026) : (DATA.settings?.year || 2026);
+            $('#f-medium').value  = item ? (item.medium || 'Mixed Media') : 'Mixed Media';
+            $('#f-desc').value    = item ? (item.description || '') : '';
+            $('#f-featured').checked = item ? !!item.featured : false;
+
+            // Status toggle
+            const status = item ? (item.status || 'available') : 'available';
+            $$('#f-status button').forEach(b => b.classList.toggle('is-on', b.dataset.val === status));
+
+            // Image preview
+            const preview = $('#drop-preview');
+            const empty   = $('#drop-empty');
+            if (item && item.img) {
+                preview.src = item.img;
+                preview.style.display = '';
+                empty.style.display = 'none';
+            } else {
+                preview.removeAttribute('src');
+                preview.style.display = 'none';
+                empty.style.display = '';
+            }
+
+            drawer.classList.add('is-open');
+            drawer.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => $('#f-title').focus(), 250);
+        }
+
+        function closeDrawer() {
+            drawer.classList.remove('is-open');
+            drawer.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            editingId = null;
+            pendingImageDataUrl = null;
+        }
+        drawer.querySelectorAll('[data-drawer-close]').forEach(b =>
+            b.addEventListener('click', closeDrawer));
+
+        // Status toggle
+        $('#f-status').addEventListener('click', e => {
+            const b = e.target.closest('button[data-val]');
+            if (!b) return;
+            $$('#f-status button').forEach(btn => btn.classList.remove('is-on'));
+            b.classList.add('is-on');
+        });
+
+        // Image drop zone
+        const drop = $('#drop-zone');
+        const dropInput = $('#drop-input');
+        drop.addEventListener('click', () => dropInput.click());
+        drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('is-over'); });
+        drop.addEventListener('dragleave', () => drop.classList.remove('is-over'));
+        drop.addEventListener('drop', e => {
+            e.preventDefault();
+            drop.classList.remove('is-over');
+            const f = e.dataTransfer.files?.[0];
+            if (f) handleImageFile(f);
+        });
+        dropInput.addEventListener('change', e => {
+            const f = e.target.files?.[0];
+            if (f) handleImageFile(f);
+            e.target.value = '';
+        });
+
+        function handleImageFile(file) {
+            if (!file.type.startsWith('image/')) {
+                toast('אנא בחרו קובץ תמונה', 'err');
+                return;
+            }
+            if (file.size > 8 * 1024 * 1024) {
+                toast('הקובץ גדול מדי (מקס 8MB)', 'err');
+                return;
+            }
+            // For server mode, upload immediately
+            if (SERVER_MODE) {
+                const fd = new FormData();
+                fd.append('image', file);
+                toast('מעלה תמונה...');
+                fetch('./api/upload', { method: 'POST', body: fd })
+                    .then(r => r.json())
+                    .then(j => {
+                        if (j.path) {
+                            pendingImageDataUrl = j.path;
+                            $('#drop-preview').src = j.path;
+                            $('#drop-preview').style.display = '';
+                            $('#drop-empty').style.display = 'none';
+                            toast('הועלה');
+                        } else {
+                            throw new Error('No path');
+                        }
+                    })
+                    .catch(() => {
+                        toast('העלאה נכשלה — שומר מקומית', 'err');
+                        readAsDataUrl(file);
+                    });
+            } else {
+                readAsDataUrl(file);
+            }
+        }
+        function readAsDataUrl(file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                pendingImageDataUrl = reader.result;
+                $('#drop-preview').src = reader.result;
+                $('#drop-preview').style.display = '';
+                $('#drop-empty').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        $('#f-save').addEventListener('click', () => {
+            const num    = parseInt($('#f-num').value, 10);
+            const price  = parseInt($('#f-price').value, 10);
+            const title  = $('#f-title').value.trim();
+            const year   = parseInt($('#f-year').value, 10) || 2026;
+            const medium = $('#f-medium').value.trim() || 'Mixed Media';
+            const desc   = $('#f-desc').value.trim();
+            const featured = $('#f-featured').checked;
+            const status = $('#f-status button.is-on')?.dataset.val || 'available';
+
+            if (!Number.isFinite(num) || num < 1) return toast('מספר לא תקין', 'err');
+            if (!Number.isFinite(price) || price < 0) return toast('מחיר לא תקין', 'err');
+            if (!title) return toast('יש להזין כותרת', 'err');
+
+            if (editingId) {
+                const it = DATA.items.find(i => i.id === editingId);
+                if (!it) return;
+                it.num = num;
+                it.price = price;
+                it.title = title;
+                it.year = year;
+                it.medium = medium;
+                it.description = desc;
+                it.featured = featured;
+                it.status = status;
+                if (pendingImageDataUrl) it.img = pendingImageDataUrl;
+                toast('נשמר');
+            } else {
+                if (!pendingImageDataUrl) return toast('יש להוסיף תמונה', 'err');
+                DATA.items.push({
+                    id: 'alakir-new-' + uid(),
+                    num: num,
+                    title: title,
+                    price: price,
+                    img: pendingImageDataUrl,
+                    alt: 'Alakir Gallery — N° ' + num,
+                    year: year,
+                    medium: medium,
+                    description: desc,
+                    featured: featured,
+                    status: status,
+                    order: num
+                });
+                toast('נוצר!');
+            }
+            persist();
+            renderItems();
+            renderDashboard();
+            closeDrawer();
+        });
+
+        $('#f-delete').addEventListener('click', async () => {
+            if (!editingId) return;
+            if (await confirmDialog('למחוק את היצירה?', 'פעולה זו אינה הפיכה.')) {
+                deleteItem(editingId);
+                closeDrawer();
+            }
+        });
+
+        function deleteItem(id) {
+            DATA.items = DATA.items.filter(i => i.id !== id);
+            persist();
+            renderItems();
+            renderDashboard();
+            toast('נמחק');
+        }
+
+        /* ============================================================
+           ORDERS
+           ============================================================ */
+        function getOrders() {
+            const fromData = DATA.orders || [];
+            let local = [];
+            try { local = JSON.parse(localStorage.getItem(LS_ORDERS) || '[]'); } catch (_) {}
+            // merge by id
+            const map = new Map();
+            [...fromData, ...local].forEach(o => map.set(o.id, o));
+            return Array.from(map.values()).sort((a, b) => b.ts - a.ts);
+        }
+
+        function renderOrders() {
+            const orders = getOrders();
+            $('#nav-orders-count').textContent = orders.length;
+            const c = $('#orders-content');
+            if (orders.length === 0) {
+                c.innerHTML = `
+                    <div class="ak-card">
+                        <div class="ak-empty" style="padding:50px 20px">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+                                <path d="M3 6h2.5l3 11h10l2.5-8H7.5"/>
+                                <circle cx="10" cy="20" r="1.5" fill="currentColor"/>
+                                <circle cx="17" cy="20" r="1.5" fill="currentColor"/>
+                            </svg>
+                            <div class="ak-empty__h">אין הזמנות עדיין</div>
+                            <div class="ak-empty__p">הזמנות מהאתר יופיעו כאן אוטומטית</div>
+                        </div>
+                    </div>`;
+                return;
+            }
+            c.innerHTML = `
+                <div class="ak-card" style="padding:0;overflow:auto">
+                    <table class="ak-table">
+                        <thead><tr>
+                            <th>תאריך</th><th>הזמנה</th><th>לקוח</th>
+                            <th>פריטים</th><th>סכום</th><th>סטטוס</th>
+                        </tr></thead>
+                        <tbody>${orders.map(o => `
+                            <tr data-order="${esc(o.id)}">
+                                <td>${fmtDate(o.ts)}</td>
+                                <td class="ak-mono">#${esc(o.id)}</td>
+                                <td>${esc((o.customer && o.customer.name) || '—')}</td>
+                                <td>${(o.items || []).length}</td>
+                                <td class="ak-mono">${fmtILS(o.total)}</td>
+                                <td>${o.demo ? 'הדגמה' : esc(o.status || 'paid')}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+            $$('#orders-content [data-order]').forEach(r =>
+                r.addEventListener('click', () => openOrder(r.dataset.order)));
+        }
+        $('#orders-export').addEventListener('click', () => {
+            const orders = getOrders();
+            if (orders.length === 0) return toast('אין הזמנות לייצוא', 'err');
+            const rows = [['תאריך','מזהה','לקוח','דוא״ל','טלפון','עיר','סכום','סטטוס','פריטים']];
+            orders.forEach(o => rows.push([
+                fmtDate(o.ts),
+                '#' + o.id,
+                (o.customer && o.customer.name) || '',
+                (o.customer && o.customer.email) || '',
+                (o.customer && o.customer.phone) || '',
+                (o.customer && o.customer.city) || '',
+                Math.round(o.total),
+                o.status || (o.demo ? 'demo' : 'paid'),
+                (o.items || []).map(i => 'N°' + String(i.num).padStart(2,'0')).join('|')
+            ]));
+            const csv = '\uFEFF' + rows.map(r => r.map(v =>
+                ('"' + String(v ?? '').replace(/"/g, '""') + '"')).join(',')).join('\n');
+            downloadFile('alakir-orders-' + Date.now() + '.csv', csv, 'text/csv;charset=utf-8;');
+        });
+
+        function openOrder(id) {
+            const o = getOrders().find(x => x.id === id);
+            if (!o) return;
+            const c = $('#order-detail');
+            const lines = (o.items || []).map(it => {
+                const cat = DATA.items.find(c => c.id === it.id);
+                return `
+                <div class="ak-order-line">
+                    <img src="${safeUrl(cat?.img || '')}" alt="" onerror="this.style.opacity='0.15'">
+                    <div class="ak-order-line__info">
+                        <div class="ak-order-line__num">N° ${String(it.num).padStart(2,'0')}</div>
+                        <div class="ak-order-line__title">${esc(it.title || ('יצירה N° ' + it.num))}</div>
+                    </div>
+                    <div class="ak-order-line__price">${fmtILS(it.price)}</div>
+                </div>`;
+            }).join('');
+            c.innerHTML = `
+                <div class="ak-section">
+                    <div class="ak-section__h">פרטי לקוח</div>
+                    <div style="font-family:var(--ak-serif);line-height:1.8;word-break:break-word">
+                        <strong>${esc(o.customer?.name || '—')}</strong><br>
+                        <span dir="ltr">${esc(o.customer?.email || '')}</span><br>
+                        <span dir="ltr">${esc(o.customer?.phone || '')}</span><br>
+                        ${esc(o.customer?.address || '')}, ${esc(o.customer?.city || '')} ${esc(o.customer?.zip || '')}
+                    </div>
+                </div>
+                <div class="ak-section">
+                    <div class="ak-section__h">פריטים</div>
+                    ${lines}
+                </div>
+                <div class="ak-section">
+                    <div class="ak-section__h">תשלום</div>
+                    <div style="display:flex;justify-content:space-between;font-family:var(--ak-serif);font-size:18px;font-weight:700">
+                        <span>סך הכל</span>
+                        <span class="ak-mono">${fmtILS(o.total)}</span>
+                    </div>
+                    <div style="font-family:var(--ak-serif);font-style:italic;color:var(--ak-mute);margin-top:4px">
+                        ${fmtDate(o.ts)} · ${o.demo ? 'הדגמה' : (o.status || 'paid')}
+                    </div>
+                </div>`;
+            $('#order-drawer').classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+        $$('[data-order-close]').forEach(b => b.addEventListener('click', () => {
+            $('#order-drawer').classList.remove('is-open');
+            document.body.style.overflow = '';
+        }));
+
+        /* ============================================================
+           SETTINGS
+           ============================================================ */
+        function renderSettings() {
+            const s = DATA.settings || defaultSettings();
+            $('#s-title').value           = s.title || '';
+            $('#s-eyebrow').value         = s.eyebrow || '';
+            $('#s-subtitle').value        = s.subtitle || '';
+            $('#s-rule').value            = s.rule || '';
+            $('#s-artist').value          = s.artist || '';
+            $('#s-year').value            = s.year || 2026;
+            $('#s-featured-first').checked = s.showFeaturedFirst !== false;
+            $('#s-sold-ribbon').checked   = s.soldRibbon !== false;
+            $('#s-demo').checked          = s.demoMode !== false;
+            $('#s-icount-code').value     = s.icountPageCode || '';
+            $('#s-icount-url').value      = s.icountPageUrl  || '';
+            $('#s-shipping').value        = s.shipping || 0;
+            $('#s-pw1').value = '';
+            $('#s-pw2').value = '';
+        }
+
+        $('#settings-save').addEventListener('click', async () => {
+            const s = DATA.settings = DATA.settings || {};
+            s.title    = $('#s-title').value.trim();
+            s.eyebrow  = $('#s-eyebrow').value.trim();
+            s.subtitle = $('#s-subtitle').value.trim();
+            s.rule     = $('#s-rule').value.trim();
+            s.artist   = $('#s-artist').value.trim();
+            s.year     = parseInt($('#s-year').value, 10) || 2026;
+            s.showFeaturedFirst = $('#s-featured-first').checked;
+            s.soldRibbon       = $('#s-sold-ribbon').checked;
+            s.demoMode         = $('#s-demo').checked;
+            s.icountPageCode   = $('#s-icount-code').value.trim();
+            s.icountPageUrl    = $('#s-icount-url').value.trim();
+            s.shipping         = parseInt($('#s-shipping').value, 10) || 0;
+
+            // Password change
+            const pw1 = $('#s-pw1').value;
+            const pw2 = $('#s-pw2').value;
+            if (pw1 || pw2) {
+                if (pw1 !== pw2) return toast('הסיסמאות אינן תואמות', 'err');
+                if (pw1.length < 4) return toast('סיסמה קצרה מדי', 'err');
+                const h = await sha256(pw1);
+                localStorage.setItem(LS_PWHASH, h);
+                toast('הסיסמה עודכנה');
+            }
+            persist();
+            renderDashboard();
+            toast('הגדרות נשמרו');
+        });
+
+        /* ============================================================
+           IMPORT / EXPORT / RESET
+           ============================================================ */
+        function exportJSON() {
+            downloadFile(
+                'gallery-data-' + new Date().toISOString().slice(0,10) + '.json',
+                JSON.stringify(DATA, null, 2)
+            );
+        }
+
+        $('#data-export').addEventListener('click', exportJSON);
+
+        $('#data-export-zip').addEventListener('click', () => {
+            // Basic: export JSON + a manifest. Full ZIP would need JSZip; we
+            // provide a tar-like multi-file via a single JSON envelope with
+            // base64 images so the data is self-contained.
+            const envelope = {
+                exported: new Date().toISOString(),
+                version: 1,
+                files: {
+                    'data/gallery-data.json': JSON.stringify(DATA, null, 2)
+                }
+            };
+            downloadFile(
+                'alakir-export-' + Date.now() + '.json',
+                JSON.stringify(envelope, null, 2)
+            );
+            toast('יוצא · השתמשו ב־ZIP מהשרת לחבילה מלאה');
+        });
+
+        $('#data-import').addEventListener('click', () => $('#import-file').click());
+        $('#import-file').addEventListener('change', async e => {
+            const f = e.target.files?.[0];
+            if (!f) return;
+            try {
+                const text = await f.text();
+                const parsed = JSON.parse(text);
+                if (!parsed.items || !Array.isArray(parsed.items)) {
+                    throw new Error('Invalid format');
+                }
+                if (!await confirmDialog('להחליף את כל הנתונים?', 'הקטלוג הנוכחי יוחלף בקובץ המיובא.')) return;
+                DATA = parsed;
+                persist({ immediate: true });
+                renderDashboard();
+                renderItems();
+                renderSettings();
+                toast('יובאו ' + parsed.items.length + ' יצירות');
+            } catch (err) {
+                toast('קובץ לא תקין', 'err');
+            }
+            e.target.value = '';
+        });
+
+        $('#data-reset').addEventListener('click', async () => {
+            if (!await confirmDialog('לאפס לברירת מחדל?', 'כל השינויים יאבדו לצמיתות.')) return;
+            try {
+                const r = await fetch('./data/gallery-data.json', { cache: 'no-store' });
+                if (r.ok) {
+                    DATA = await r.json();
+                } else {
+                    DATA = { version: 1, settings: defaultSettings(), items: [], orders: [] };
+                }
+            } catch (_) {
+                DATA = { version: 1, settings: defaultSettings(), items: [], orders: [] };
+            }
+            persist({ immediate: true });
+            renderDashboard();
+            renderItems();
+            renderSettings();
+            toast('אופס לברירת מחדל');
+        });
+
+        /* ============================================================
+           KEYBOARD SHORTCUTS
+           ============================================================ */
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                if (drawer.classList.contains('is-open')) closeDrawer();
+                else if ($('#order-drawer').classList.contains('is-open')) {
+                    $('#order-drawer').classList.remove('is-open');
+                    document.body.style.overflow = '';
+                }
+                else if (confirmEl.classList.contains('is-on')) {
+                    confirmEl.classList.remove('is-on');
+                    if (pendingConfirmAction) { pendingConfirmAction(false); pendingConfirmAction = null; }
+                }
+            }
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                if (drawer.classList.contains('is-open')) {
+                    $('#f-save').click();
+                } else {
+                    persist({ immediate: true });
+                    toast('נשמר');
+                }
+            }
+            if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) {
+                e.preventDefault();
+                const sb = $('#items-search');
+                if (sb) { setView('items'); sb.focus(); }
+            }
+        });
+
+        /* ============================================================
+           MODE INDICATOR
+           ============================================================ */
+        function updateModeIndicator() {
+            const pill = $('#mode-pill');
+            if (SERVER_MODE) {
+                pill.classList.add('ak-pill--ok');
+                $('#mode-label').textContent = 'שרת · Server';
+            } else {
+                pill.classList.remove('ak-pill--ok');
+                $('#mode-label').textContent = 'מקומי · Local';
+            }
+        }
+
+        /* ============================================================
+           INIT
+           ============================================================ */
+        async function init() {
+            await detectServer();
+            updateModeIndicator();
+            DATA = await loadData();
+            // ensure required shape
+            if (!DATA.settings) DATA.settings = defaultSettings();
+            if (!DATA.items)    DATA.items = [];
+            if (!DATA.orders)   DATA.orders = [];
+
+            renderDashboard();
+            renderItems();
+            renderSettings();
+        }
+
+        /* ============================================================
+           CURSOR SPOTLIGHT — sets --mx/--my on <body> for the ::after
+           gradient. rAF-throttled, only updates the CSS variables.
+           ============================================================ */
+        (function () {
+            let pending = false;
+            let lastX = window.innerWidth / 2;
+            let lastY = window.innerHeight / 3;
+            const root = document.body.style;
+            // initial values so the spotlight isn't off-screen
+            root.setProperty('--mx', lastX + 'px');
+            root.setProperty('--my', lastY + 'px');
+            window.addEventListener('mousemove', e => {
+                lastX = e.clientX;
+                lastY = e.clientY;
+                if (pending) return;
+                pending = true;
+                requestAnimationFrame(() => {
+                    root.setProperty('--mx', lastX + 'px');
+                    root.setProperty('--my', lastY + 'px');
+                    pending = false;
+                });
+            }, { passive: true });
+        })();
+
+        // boot: check auth
+        (async function boot() {
+            if (await checkAuth()) {
+                $('#login').classList.add('is-hidden');
+                setTimeout(() => $('#login').remove(), 500);
+                $('#app').classList.add('is-on');
+                init();
+            }
+        })();
+
+    })();
+    </script>
+</body>
+</html>
