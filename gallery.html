@@ -30,28 +30,12 @@
         html { scroll-behavior: smooth; }
 
 
-        /* ===== Anti-copy / anti-select on public pages =====
-           Casual deterrent — prevents accidental text selection, right-click
-           menu, image drag, and copy/cut. Power users with devtools can still
-           bypass this; it's not bulletproof DRM. Form fields keep normal
-           selection behavior so search inputs etc. still work. */
-        html, body {
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            -webkit-touch-callout: none;
-        }
-        input, textarea, select, [contenteditable="true"] {
-            user-select: text;
-            -webkit-user-select: text;
-            -moz-user-select: text;
-        }
         img {
             -webkit-user-drag: none;
-            user-drag: none;
-            pointer-events: auto;
         }
+        /* Lightbox image must NOT capture events when lightbox is closed */
+        #lb-img { pointer-events: none; }
+        .pg-lb.is-open #lb-img { pointer-events: auto; }
 
         body {
             font-family: var(--ak-sans);
@@ -366,6 +350,11 @@
             opacity: 1;
             pointer-events: all;
         }
+        .pg-lb.is-open .pg-lb__close,
+        .pg-lb.is-open .pg-lb__prev,
+        .pg-lb.is-open .pg-lb__next {
+            pointer-events: auto;
+        }
 
         .pg-lb__img {
             max-width: 86vw;
@@ -380,6 +369,7 @@
             position: fixed;
             top: 22px;
             right: 28px;
+            pointer-events: none;
             width: 48px;
             height: 48px;
             border-radius: 50%;
@@ -403,6 +393,7 @@
             position: fixed;
             top: 50%;
             transform: translateY(-50%);
+            pointer-events: none;
             width: 54px;
             height: 54px;
             border-radius: 50%;
@@ -433,6 +424,7 @@
             position: fixed;
             bottom: 26px;
             left: 50%;
+            pointer-events: none;
             transform: translateX(-50%);
             font-family: var(--ak-serif);
             font-size: 11px;
@@ -645,9 +637,8 @@
             top: 0; bottom: 0;
             left: 0;
             width: min(440px, 100%);
-            background: var(--pg-bg);
-            background-image: url('./assets/pegboard.svg');
-            background-size: 36px 36px;
+            background: linear-gradient(160deg, #f8f2e4 0%, #f2e8d0 50%, #f6edd6 100%);
+            border-right: 1px solid rgba(160, 130, 80, 0.22);
             transform: translateX(-100%);
             transition: transform 0.5s var(--ak-ease);
             display: flex;
@@ -660,12 +651,11 @@
 
         .pg-cart__head {
             padding: 22px 24px 18px;
-            border-bottom: 1px solid rgba(26,26,26,0.1);
+            border-bottom: 1px solid rgba(160, 130, 80, 0.2);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(247, 244, 238, 0.85);
-            backdrop-filter: blur(10px);
+            background: rgba(240, 228, 200, 0.95);
         }
         .pg-cart__title {
             font-family: var(--ak-serif);
@@ -697,6 +687,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 18px 22px;
+            background: rgba(255, 252, 244, 0.5);
         }
         .pg-cart__empty {
             display: flex;
@@ -732,7 +723,7 @@
             gap: 14px;
             align-items: center;
             padding: 14px 0;
-            border-bottom: 1px dashed rgba(26,26,26,0.12);
+            border-bottom: 1px dashed rgba(160, 130, 80, 0.28);
         }
         .pg-line:last-child { border-bottom: 0; }
         .pg-line__img {
@@ -781,8 +772,8 @@
 
         .pg-cart__foot {
             padding: 18px 24px 24px;
-            border-top: 1px solid rgba(26,26,26,0.12);
-            background: rgba(247, 244, 238, 0.92);
+            border-top: 1px solid rgba(160, 130, 80, 0.2);
+            background: rgba(240, 228, 200, 0.95);
         }
         .pg-cart__totals {
             display: flex;
@@ -803,7 +794,7 @@
             color: var(--ak-ink);
             margin-top: 8px;
             padding-top: 12px;
-            border-top: 1px solid rgba(26,26,26,0.12);
+            border-top: 1px solid rgba(160, 130, 80, 0.2);
         }
         .pg-cart__cta {
             width: 100%;
@@ -937,9 +928,7 @@
             position: fixed;
             inset: 0;
             z-index: 9000;
-            background: rgba(8, 6, 4, 0.7);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
+            background: rgba(8, 6, 4, 0.78);
             display: grid;
             place-items: center;
             opacity: 0;
@@ -947,17 +936,36 @@
             transition: opacity 0.4s ease;
             padding: 20px;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
-        .pg-co.is-open { opacity: 1; pointer-events: auto; }
+        .pg-co.is-open { opacity: 1; pointer-events: auto !important; }
+        /* Guarantee panel and ALL descendants are clickable — no CSS can override */
+        .pg-co.is-open .pg-co__panel,
+        .pg-co.is-open .pg-co__head,
+        .pg-co.is-open .pg-co__body,
+        .pg-co.is-open .pg-co__foot,
+        .pg-co.is-open .pg-co__steps { pointer-events: auto !important; }
+        .pg-co.is-open .pg-co__close,
+        .pg-co.is-open .pg-co__btn,
+        .pg-co.is-open .pg-co__field input,
+        .pg-co.is-open .pg-co__field textarea {
+            pointer-events: auto !important;
+            touch-action: manipulation;
+            -webkit-touch-callout: default;
+        }
+        .pg-co.is-open .pg-co__close,
+        .pg-co.is-open .pg-co__btn { cursor: pointer !important; }
 
         .pg-co__panel {
             width: min(620px, 100%);
             max-height: calc(100vh - 40px);
-            background: var(--pg-bg);
-            background-image: url('./assets/pegboard.svg');
-            background-size: 36px 36px;
-            box-shadow: 0 40px 90px rgba(0,0,0,0.5);
-            border: 1px solid rgba(26,26,26,0.1);
+            /* Vintage paper background */
+            background:
+                linear-gradient(135deg, #f8f2e4 0%, #f2e8d0 45%, #f6edd6 100%);
+            box-shadow:
+                0 2px 8px rgba(140, 110, 60, 0.18) inset,
+                0 40px 90px rgba(0,0,0,0.5);
+            border: 1px solid rgba(160, 130, 80, 0.25);
             transform: translateY(28px) scale(0.97);
             transition: transform 0.5s var(--ak-bounce);
             display: flex;
@@ -970,8 +978,8 @@
 
         .pg-co__head {
             padding: 22px 28px 18px;
-            border-bottom: 1px solid rgba(26,26,26,0.1);
-            background: rgba(247, 244, 238, 0.92);
+            border-bottom: 1px solid rgba(160, 130, 80, 0.2);
+            background: rgba(240, 228, 200, 0.95);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -1003,8 +1011,8 @@
             display: flex;
             gap: 12px;
             padding: 16px 28px;
-            border-bottom: 1px solid rgba(26,26,26,0.1);
-            background: rgba(247, 244, 238, 0.5);
+            border-bottom: 1px solid rgba(160, 130, 80, 0.18);
+            background: rgba(235, 220, 185, 0.4);
         }
         .pg-co__step {
             flex: 1;
@@ -1048,7 +1056,10 @@
         .pg-co__body {
             padding: 24px 28px;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             flex: 1;
+            min-height: 0;
+            background: rgba(255, 252, 244, 0.55);
         }
         .pg-co__pane { display: none; }
         .pg-co__pane.is-active { display: block; animation: pg-fade 0.4s ease; }
@@ -1098,11 +1109,16 @@
             font-size: 14px;
             color: var(--ak-ink);
             padding: 11px 13px;
-            background: rgba(255,255,255,0.7);
-            border: 1px solid rgba(26,26,26,0.18);
+            background: rgba(255, 253, 247, 0.92);
+            border: 1px solid rgba(160, 130, 80, 0.3);
             outline: none;
-            transition: border-color 0.25s, background 0.25s;
+            transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
             direction: rtl;
+            position: relative;
+            z-index: 1;
+            pointer-events: auto;
+            -webkit-user-select: text;
+            user-select: text;
         }
         .pg-co__field input[type="email"],
         .pg-co__field input[dir="ltr"] {
@@ -1111,8 +1127,9 @@
         }
         .pg-co__field input:focus,
         .pg-co__field textarea:focus {
-            border-color: var(--ak-ink);
-            background: #fff;
+            border-color: rgba(140, 100, 50, 0.7);
+            background: #fffdf5;
+            box-shadow: 0 0 0 3px rgba(200, 160, 80, 0.15);
         }
         .pg-co__field input.is-invalid {
             border-color: #b34a3a;
@@ -1129,8 +1146,8 @@
         .pg-co__totals {
             margin: 18px 0 22px;
             padding: 16px 18px;
-            background: rgba(255,255,255,0.55);
-            border: 1px solid rgba(26,26,26,0.1);
+            background: rgba(245, 235, 205, 0.45);
+            border: 1px solid rgba(160, 130, 80, 0.22);
             display: flex;
             flex-direction: column;
             gap: 6px;
@@ -1158,8 +1175,8 @@
             gap: 10px;
             margin-bottom: 22px;
             padding: 12px;
-            background: rgba(255,255,255,0.4);
-            border: 1px dashed rgba(26,26,26,0.18);
+            background: rgba(245, 235, 205, 0.45);
+            border: 1px dashed rgba(160, 130, 80, 0.35);
             max-height: 180px;
             overflow-y: auto;
         }
@@ -1196,8 +1213,8 @@
 
         .pg-co__foot {
             padding: 18px 28px 24px;
-            border-top: 1px solid rgba(26,26,26,0.1);
-            background: rgba(247, 244, 238, 0.92);
+            border-top: 1px solid rgba(160, 130, 80, 0.2);
+            background: rgba(240, 228, 200, 0.95);
             display: flex;
             gap: 12px;
             align-items: center;
@@ -1231,6 +1248,9 @@
             background: transparent;
             color: var(--ak-ink);
             transition: background 0.3s, color 0.3s, transform 0.3s;
+            position: relative;
+            z-index: 1;
+            pointer-events: auto;
         }
         .pg-co__btn:hover { background: rgba(26,26,26,0.06); }
         .pg-co__btn--primary {
@@ -1916,7 +1936,7 @@
     </aside>
 
     <!-- Checkout overlay -->
-    <div class="pg-co" id="pg-co" aria-hidden="true">
+    <div class="pg-co" id="pg-co" aria-hidden="true" inert>
         <div class="pg-co__panel" role="dialog" aria-modal="true" aria-label="תשלום">
             <div class="pg-co__head">
                 <h2 class="pg-co__title">Checkout</h2>
@@ -2615,6 +2635,8 @@ let currentStep  = 1;
 function openCheckout() {
     if (cart.length === 0) return;
     coEl.classList.add('is-open');
+    coEl.removeAttribute('inert');
+    coEl.style.pointerEvents = 'auto';
     coEl.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
     setStep(1);
@@ -2631,6 +2653,7 @@ function openCheckout() {
 }
 function closeCheckout() {
     coEl.classList.remove('is-open');
+    coEl.style.pointerEvents = '';
     coEl.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
 }
@@ -2834,9 +2857,15 @@ function checkIcountReturn() {
     localStorage.removeItem('alakir.pendingOrder');
 
     /* Open the cart drawer at the success pane */
-    if (typeof openCart === 'function') openCart(); else {
-        document.querySelector('.pg-cart')?.classList.add('is-open');
-        document.querySelector('.pg-co')?.classList.add('is-open');
+    if (typeof openCheckout === 'function') {
+        openCheckout();
+    } else {
+        const coElRef = document.querySelector('.pg-co');
+        if (coElRef) {
+            coElRef.classList.add('is-open');
+            coElRef.removeAttribute('inert');
+            coElRef.style.pointerEvents = 'auto';
+        }
     }
     if (typeof setStep === 'function') {
         const idEl = document.getElementById('co-order-id');
@@ -2938,35 +2967,5 @@ renderFab();
    so paid orders also appear in the admin's Orders tab.
    ============================================================================ */
 </script>
-    <script>
-    /* ===== Anti-copy event guard =====
-       Cancels copy/cut/drag/right-click globally. Form fields are exempt
-       so visitors can still type in search/cart/checkout. */
-    (function () {
-        const FORM_TAGS = /^(INPUT|TEXTAREA|SELECT)$/;
-        const block = e => {
-            const t = e.target || e.srcElement;
-            if (t && (FORM_TAGS.test(t.tagName) ||
-                      t.isContentEditable)) return;
-            e.preventDefault();
-            return false;
-        };
-        ['copy', 'cut', 'contextmenu', 'dragstart', 'selectstart']
-            .forEach(evt => document.addEventListener(evt, block, true));
-        // Block keyboard shortcuts: Ctrl/Cmd+C, +A, +X, +S, +U, F12 view-source
-        document.addEventListener('keydown', e => {
-            const t = e.target || e.srcElement;
-            if (t && (FORM_TAGS.test(t.tagName) || t.isContentEditable)) return;
-            const k = (e.key || '').toLowerCase();
-            const mod = e.ctrlKey || e.metaKey;
-            if (mod && (k === 'c' || k === 'a' || k === 'x' ||
-                        k === 's' || k === 'u' || k === 'p')) {
-                e.preventDefault();
-                return false;
-            }
-            if (e.key === 'F12') { e.preventDefault(); return false; }
-        }, true);
-    })();
-    </script>
 </body>
 </html>
