@@ -902,6 +902,13 @@
             color: var(--ak-ink);
             border-color: #f7f4ee;
         }
+        .pg-lb__btn--added {
+            background: rgba(110,160,100,0.18);
+            border-color: #7db87a;
+            color: #7db87a;
+            cursor: default;
+            pointer-events: none;
+        }
 
         /* hide existing counter pos -> we re-position higher */
         .pg-lb__counter {
@@ -2552,6 +2559,9 @@ function setLbContent(idx) {
     lbNum.textContent = 'N° ' + String(c.num).padStart(2,'0');
     lbTitle.textContent = c.title;
     lbPrice.textContent = fmt(c.price);
+    const inCart = cart.some(l => l.id === c.id);
+    lbAdd.textContent = inCart ? '✓ בסל' : 'הוסף לסל';
+    lbAdd.classList.toggle('pg-lb__btn--added', inCart);
 }
 
 function openLb(idx) {
@@ -2607,6 +2617,11 @@ lb.addEventListener('touchend',   e => {
 
 lbAdd.addEventListener('click', () => {
     addToCart(catalog[current].id);
+    const inCart = cart.some(l => l.id === catalog[current].id);
+    if (inCart) {
+        lbAdd.textContent = '✓ בסל';
+        lbAdd.classList.add('pg-lb__btn--added');
+    }
 });
 lbBuy.addEventListener('click', () => {
     addToCart(catalog[current].id);
