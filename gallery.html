@@ -3017,6 +3017,104 @@ renderFab();
    ============================================================================ */
 </script>
 
+<!-- Accessibility Widget -->
+<style>
+#ak-a11y-btn{position:fixed;bottom:24px;left:24px;z-index:9999;width:52px;height:52px;
+  border-radius:50%;background:#2E728F;color:#fff;border:3px solid #fff;cursor:pointer;
+  font-size:22px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(0,0,0,0.3);transition:transform .2s;
+  font-family:Arial,sans-serif;line-height:1;}
+#ak-a11y-btn:hover{transform:scale(1.1);}
+#ak-a11y-panel{position:fixed;bottom:86px;left:24px;z-index:9999;
+  background:#fff;border-radius:12px;padding:16px;width:200px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.18);display:none;direction:rtl;
+  font-family:"Roboto",system-ui,sans-serif;}
+#ak-a11y-panel.is-open{display:block;}
+#ak-a11y-panel h3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:#4a4540;margin-bottom:12px;font-weight:600;}
+.ak-a11y-row{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;font-size:13px;color:#1a1a1a;}
+.ak-a11y-row:last-child{margin-bottom:0;}
+.ak-a11y-ctrl{display:flex;gap:6px;}
+.ak-a11y-ctrl button{width:28px;height:28px;border:1.5px solid #c89274;background:#fff;
+  border-radius:6px;cursor:pointer;font-size:14px;font-weight:700;color:#8a4f2e;
+  display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.ak-a11y-ctrl button:hover{background:#f7f4ee;}
+.ak-a11y-toggle{width:44px;height:24px;border-radius:12px;border:none;cursor:pointer;
+  background:#ddd;position:relative;transition:background .2s;}
+.ak-a11y-toggle.is-on{background:#2E728F;}
+.ak-a11y-toggle::after{content:'';position:absolute;top:3px;right:3px;width:18px;
+  height:18px;border-radius:50%;background:#fff;transition:right .2s;}
+.ak-a11y-toggle.is-on::after{right:calc(100% - 21px);}
+body.ak-high-contrast{filter:contrast(1.6) saturate(0);}
+body.ak-big-cursor *{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M8 4l16 12-7 1 4 9-3 1-4-9-6 5z' fill='%23000' stroke='%23fff' stroke-width='1.5'/%3E%3C/svg%3E") 8 4, auto!important;}
+body.ak-underline-links a{text-decoration:underline!important;}
+</style>
+
+<div id="ak-a11y-btn" role="button" aria-label="תפריט נגישות" tabindex="0">♿</div>
+<div id="ak-a11y-panel" role="dialog" aria-label="אפשרויות נגישות">
+  <h3>נגישות</h3>
+  <div class="ak-a11y-row">
+    <span>גודל טקסט</span>
+    <div class="ak-a11y-ctrl">
+      <button id="ak-font-down" aria-label="הקטן טקסט">−</button>
+      <button id="ak-font-reset" aria-label="אפס טקסט" style="font-size:11px;">↺</button>
+      <button id="ak-font-up" aria-label="הגדל טקסט">+</button>
+    </div>
+  </div>
+  <div class="ak-a11y-row">
+    <span>ניגודיות גבוהה</span>
+    <button class="ak-a11y-toggle" id="ak-contrast" aria-pressed="false"></button>
+  </div>
+  <div class="ak-a11y-row">
+    <span>הדגשת קישורים</span>
+    <button class="ak-a11y-toggle" id="ak-links" aria-pressed="false"></button>
+  </div>
+  <div class="ak-a11y-row">
+    <span>סמן גדול</span>
+    <button class="ak-a11y-toggle" id="ak-cursor" aria-pressed="false"></button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const btn   = document.getElementById('ak-a11y-btn');
+  const panel = document.getElementById('ak-a11y-panel');
+  let fontSize = 100;
+
+  btn.addEventListener('click', () => panel.classList.toggle('is-open'));
+  btn.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') panel.classList.toggle('is-open'); });
+  document.addEventListener('click', e => {
+    if(!btn.contains(e.target) && !panel.contains(e.target)) panel.classList.remove('is-open');
+  });
+
+  document.getElementById('ak-font-up').addEventListener('click', () => {
+    fontSize = Math.min(fontSize + 10, 150);
+    document.documentElement.style.fontSize = fontSize + '%';
+  });
+  document.getElementById('ak-font-down').addEventListener('click', () => {
+    fontSize = Math.max(fontSize - 10, 80);
+    document.documentElement.style.fontSize = fontSize + '%';
+  });
+  document.getElementById('ak-font-reset').addEventListener('click', () => {
+    fontSize = 100;
+    document.documentElement.style.fontSize = '';
+  });
+
+  function mkToggle(id, cls) {
+    const t = document.getElementById(id);
+    t.addEventListener('click', () => {
+      const on = t.classList.toggle('is-on');
+      t.setAttribute('aria-pressed', on);
+      document.body.classList.toggle(cls, on);
+    });
+  }
+  mkToggle('ak-contrast', 'ak-high-contrast');
+  mkToggle('ak-links',    'ak-underline-links');
+  mkToggle('ak-cursor',   'ak-big-cursor');
+})();
+</script>
+
 <footer style="
   background:#1a1a1a;color:#8c857c;text-align:center;
   padding:32px 24px;font-family:'Roboto Slab',Georgia,serif;
