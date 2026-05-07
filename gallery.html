@@ -2070,41 +2070,56 @@
         </div>
     </div>
 
-    <!-- Data bootstrap: tries server JSON, falls back to localStorage, then to hardcoded defaults -->
+    <!-- Data bootstrap: loads from Supabase, falls back to localStorage then hardcoded -->
     <script>
     (function () {
-        const LS_KEY = 'alakir.galleryData';
-        window.__ALAKIR_DATA__ = null;
+        const LS_KEY   = 'alakir.galleryData';
+        const SUPA_URL = 'https://njlnwpgbestsiehabqbq.supabase.co';
+        const SUPA_KEY = 'sb_publishable_bLSJ_TnoexNhy1HfEPGxBg_7BZ89_rS';
+        const HEADERS  = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY };
 
-        // 1) try localStorage first (instant, no flash)
+        window.__ALAKIR_DATA__ = null;
+        window.__SUPA_URL__    = SUPA_URL;
+        window.__SUPA_KEY__    = SUPA_KEY;
+        window.__SUPA_HEADERS__ = HEADERS;
+
+        // Try localStorage first so there's no flash while Supabase loads
         try {
             const raw = localStorage.getItem(LS_KEY);
             if (raw) window.__ALAKIR_DATA__ = JSON.parse(raw);
         } catch (_) {}
 
-        // 2) try the JSON file (works on http servers; ignored on file://)
+        // Fetch fresh data from Supabase (always wins over localStorage cache)
         const ready = (async () => {
             try {
-                const res = await fetch('./data/gallery-data.json',
-                    { cache: 'no-store' });
-                if (res.ok) {
-                    const fresh = await res.json();
-                    // server JSON wins over localStorage if present
-                    window.__ALAKIR_DATA__ = fresh;
+                const [sRes, iRes] = await Promise.all([
+                    fetch(SUPA_URL + '/rest/v1/settings?select=*', { headers: HEADERS }),
+                    fetch(SUPA_URL + '/rest/v1/items?select=*&order=num', { headers: HEADERS })
+                ]);
+                if (sRes.ok && iRes.ok) {
+                    const settingsRows = await sRes.json();
+                    const itemRows     = await iRes.json();
+                    const settings = {};
+                    settingsRows.forEach(r => {
+                        try { settings[r.key] = JSON.parse(r.value); }
+                        catch (_) { settings[r.key] = r.value; }
+                    });
+                    const items = itemRows.map(it => ({ ...it, order: it.sort_order ?? it.num }));
+                    const data  = { settings, items };
+                    window.__ALAKIR_DATA__ = data;
+                    try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch (_) {}
                 }
             } catch (_) {}
             return window.__ALAKIR_DATA__;
         })();
         window.__ALAKIR_DATA_READY__ = ready;
 
-        // 3) listen for cross-tab updates from the admin panel
+        // Cross-tab sync when admin is open in another tab on the same browser
         window.addEventListener('storage', e => {
             if (e.key !== LS_KEY || !e.newValue) return;
             try {
                 window.__ALAKIR_DATA__ = JSON.parse(e.newValue);
-                if (typeof window.__alakirRehydrate === 'function') {
-                    window.__alakirRehydrate();
-                }
+                if (typeof window.__alakirRehydrate === 'function') window.__alakirRehydrate();
             } catch (_) {}
         });
     })();
@@ -2920,15 +2935,26 @@ function showToast(msg) {
 /* ─── Order persistence — append every successful order to localStorage,
        and POST it to the backend (when one is reachable) ─── */
 window.__alakirOnOrder = async function (order) {
+    // Save to Supabase
     try {
-        if (!SHOP_CONFIG.DEMO_MODE && SHOP_CONFIG.BACKEND && SHOP_CONFIG.BACKEND.orders_endpoint) {
-            await fetch(SHOP_CONFIG.BACKEND.orders_endpoint, {
+        const url = window.__SUPA_URL__;
+        const hdrs = window.__SUPA_HEADERS__;
+        if (url && hdrs) {
+            await fetch(url + '/rest/v1/orders', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(order)
+                headers: { ...hdrs, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                body: JSON.stringify({
+                    id:          order.id,
+                    total:       order.total,
+                    customer:    order.customer   || {},
+                    items:       order.items      || [],
+                    status:      order.status     || 'pending',
+                    payment_ref: order.paymentRef || ''
+                })
             });
         }
     } catch (_) {}
+    // localStorage backup
     try {
         const k = 'alakir.orders';
         const list = JSON.parse(localStorage.getItem(k) || '[]');

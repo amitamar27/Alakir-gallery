@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Alakir — Seed Supabase</title>
+<style>
+  body { font-family: monospace; background: #111; color: #ccc; padding: 40px; }
+  h1 { color: #c89274; }
+  #log { margin-top: 20px; line-height: 2; }
+  .ok  { color: #7db87a; }
+  .err { color: #e07070; }
+  .info { color: #aaa; }
+  button { background: #c89274; color: #111; border: none; padding: 14px 32px;
+           font-size: 16px; cursor: pointer; border-radius: 4px; margin-top: 20px; }
+  button:disabled { opacity: 0.4; cursor: default; }
+</style>
+</head>
+<body>
+<h1>העלאת יצירות ל-Supabase</h1>
+<p class="info">דף זה קורא את היצירות הקיימות ב-gallery.html ומכניס אותן ל-Supabase.<br>
+יש להריץ אותו <strong>פעם אחת בלבד</strong>.</p>
+<button id="btn">התחל העלאה</button>
+<div id="log"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SUPA_URL = 'https://njlnwpgbestsiehabqbq.supabase.co';
+const SUPA_KEY = 'sb_publishable_bLSJ_TnoexNhy1HfEPGxBg_7BZ89_rS';
+const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+const log = document.getElementById('log');
+function line(msg, cls = 'info') {
+    const d = document.createElement('div');
+    d.className = cls;
+    d.textContent = msg;
+    log.appendChild(d);
+}
+
+document.getElementById('btn').addEventListener('click', async () => {
+    const btn = document.getElementById('btn');
+    btn.disabled = true;
+    log.innerHTML = '';
+
+    // 1. Fetch gallery.html and parse items
+    line('טוען gallery.html...');
+    let items = [];
+    try {
+        const res = await fetch('./gallery.html', { cache: 'no-store' });
+        const html = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const els = doc.querySelectorAll('.pg-item[data-id]');
+        els.forEach(el => {
+            const img = el.querySelector('img');
+            items.push({
+                id:         el.dataset.id,
+                num:        parseInt(el.dataset.num, 10),
+                title:      'יצירה N° ' + el.dataset.num,
+                price:      parseInt(el.dataset.price, 10),
+                img:        img ? img.getAttribute('src') : '',
+                status:     'available',
+                featured:   false,
+                description: '',
+                year:       '2026',
+                medium:     'Mixed Media',
+                dimensions: '',
+                sort_order: parseInt(el.dataset.num, 10)
+            });
+        });
+        line(`נמצאו ${items.length} יצירות`, 'ok');
+    } catch (e) {
+        line('שגיאה בטעינת gallery.html: ' + e.message, 'err');
+        btn.disabled = false;
+        return;
+    }
+
+    // 2. Check if Supabase already has items
+    const { data: existing } = await supa.from('items').select('id');
+    if (existing && existing.length > 0) {
+        line(`⚠️ כבר יש ${existing.length} יצירות ב-Supabase. מדלג...`, 'err');
+        line('אם ברצונך לאפס — מחק את הרשומות ב-Supabase ואז הרץ שוב.', 'err');
+        btn.disabled = false;
+        return;
+    }
+
+    // 3. Insert items
+    line('מכניס יצירות ל-Supabase...');
+    const { error } = await supa.from('items').insert(items);
+    if (error) {
+        line('שגיאה: ' + error.message, 'err');
+        btn.disabled = false;
+        return;
+    }
+
+    line(`✓ ${items.length} יצירות הוכנסו בהצלחה!`, 'ok');
+    line('');
+    line('עכשיו אפשר לפתוח את admin.html — כל היצירות יופיעו שם.', 'ok');
+    line('ניתן לסגור דף זה.', 'info');
+});
+</script>
+</body>
+</html>

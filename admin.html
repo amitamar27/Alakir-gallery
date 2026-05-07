@@ -1747,9 +1747,9 @@
                 <div class="ak-field">
                     <label>סטטוס</label>
                     <div class="ak-toggle" id="f-status">
-                        <button type="button" data-val="available">זמין</button>
-                        <button type="button" data-val="reserved">שמור</button>
-                        <button type="button" data-val="sold">נמכר</button>
+                        <button type="button" data-val="available">AVAILABLE</button>
+                        <button type="button" data-val="reserved">RESERVED</button>
+                        <button type="button" data-val="sold">SOLD</button>
                     </div>
                 </div>
                 <div class="ak-field">
@@ -1801,6 +1801,9 @@
     <!-- Toast -->
     <div class="ak-toast" id="toast"></div>
 
+    <!-- Supabase JS client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
     <!-- ==================== APP LOGIC ==================== -->
     <script>
     (function () {
@@ -1816,8 +1819,12 @@
         const DEFAULT_PW    = 'alakir2026';
         const SESSION_HOURS = 24;
 
+        const SUPA_URL = 'https://njlnwpgbestsiehabqbq.supabase.co';
+        const SUPA_KEY = 'sb_publishable_bLSJ_TnoexNhy1HfEPGxBg_7BZ89_rS';
+        const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
         let DATA = null;          // { settings, items, orders }
-        let SERVER_MODE = false;  // true if backend reachable
+        let SERVER_MODE = false;  // true if Supabase is reachable
         let editingId = null;     // currently editing item (null = new)
         let pendingImageDataUrl = null; // staged image for current edit
         let filterStatus = 'all';
@@ -1913,41 +1920,68 @@
            ============================================================ */
         async function detectServer() {
             try {
-                const r = await fetch('./api/ping', { method: 'GET', cache: 'no-store' });
-                if (r.ok) {
-                    SERVER_MODE = true;
-                    return true;
-                }
-            } catch (_) {}
-            SERVER_MODE = false;
-            return false;
+                const { error } = await supa.from('settings').select('key').limit(1);
+                SERVER_MODE = !error;
+            } catch (_) {
+                SERVER_MODE = false;
+            }
+            return SERVER_MODE;
         }
 
         async function loadData() {
-            // Try server
             if (SERVER_MODE) {
                 try {
-                    const r = await fetch('./api/data', { cache: 'no-store' });
-                    if (r.ok) return await r.json();
-                } catch (_) {}
+                    const [{ data: settingsRows, error: se }, { data: itemsRows, error: ie }, { data: ordersRows }] =
+                        await Promise.all([
+                            supa.from('settings').select('*'),
+                            supa.from('items').select('*').order('num'),
+                            supa.from('orders').select('*').order('created_at', { ascending: false })
+                        ]);
+                    if (se || ie) throw se || ie;
+
+                    // If Supabase is empty, migrate existing localStorage data up to Supabase
+                    if (!itemsRows || itemsRows.length === 0) {
+                        let local = null;
+                        try {
+                            const raw = localStorage.getItem(LS_KEY);
+                            if (raw) local = JSON.parse(raw);
+                        } catch (_) {}
+                        if (local && local.items && local.items.length > 0) {
+                            toast('מעלה נתונים קיימים ל-Supabase...');
+                            return local; // persist() will be called by init() after this
+                        }
+                    }
+
+                    const settings = { ...defaultSettings() };
+                    (settingsRows || []).forEach(row => {
+                        try { settings[row.key] = JSON.parse(row.value); }
+                        catch (_) { settings[row.key] = row.value; }
+                    });
+                    // password hash stays local-only, never in Supabase
+                    const storedHash = localStorage.getItem(LS_PWHASH);
+                    if (storedHash) settings.adminPwHash = storedHash;
+
+                    const items = (itemsRows || []).map(it => ({ ...it, order: it.sort_order ?? it.num }));
+                    const orders = (ordersRows || []).map(o => ({
+                        id: o.id,
+                        ts: new Date(o.created_at).getTime(),
+                        total: o.total,
+                        customer: o.customer,
+                        items: o.items,
+                        status: o.status,
+                        paymentRef: o.payment_ref
+                    }));
+                    return { version: 1, settings, items, orders };
+                } catch (e) {
+                    toast('שגיאה בטעינת נתונים מ-Supabase', 'err');
+                }
             }
-            // Try localStorage
+            // Fallback: localStorage
             try {
                 const raw = localStorage.getItem(LS_KEY);
                 if (raw) return JSON.parse(raw);
             } catch (_) {}
-            // Try the canonical JSON file (works on http servers without backend)
-            try {
-                const r = await fetch('./data/gallery-data.json', { cache: 'no-store' });
-                if (r.ok) return await r.json();
-            } catch (_) {}
-            // Last resort: empty default
-            return {
-                version: 1,
-                settings: defaultSettings(),
-                items: [],
-                orders: []
-            };
+            return { version: 1, settings: defaultSettings(), items: [], orders: [] };
         }
 
         function defaultSettings() {
@@ -1974,42 +2008,53 @@
 
         let saveTimer = null;
         function persist(opts = {}) {
-            // Always write to localStorage immediately
-            try {
-                localStorage.setItem(LS_KEY, JSON.stringify(DATA));
-            } catch (e) {
-                toast('שגיאה: localStorage מלא', 'err');
-                return;
-            }
-            // Optimistic UI: show "saving..."
+            try { localStorage.setItem(LS_KEY, JSON.stringify(DATA)); }
+            catch (e) { toast('שגיאה: localStorage מלא', 'err'); return; }
+
             const pill = $('#save-pill');
             pill.style.display = '';
             pill.classList.remove('ak-pill--ok');
             pill.classList.add('ak-pill--saving');
             $('#save-label').textContent = 'שומר...';
 
-            // Debounced server sync
             clearTimeout(saveTimer);
             saveTimer = setTimeout(async () => {
                 if (SERVER_MODE) {
                     try {
-                        const r = await fetch('./api/save-data', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(DATA)
-                        });
-                        if (!r.ok) throw new Error('Server save failed');
+                        const SKIP = new Set(['adminPwHash']);
+                        const settingsRows = Object.entries(DATA.settings)
+                            .filter(([k]) => !SKIP.has(k))
+                            .map(([key, value]) => ({ key, value: typeof value === 'string' ? value : JSON.stringify(value) }));
+                        if (settingsRows.length) {
+                            const { error: se } = await supa.from('settings').upsert(settingsRows, { onConflict: 'key' });
+                            if (se) throw se;
+                        }
+                        if (DATA.items.length) {
+                            const ITEM_COLS = ['id','num','title','price','img','status','featured','description','year','medium','dimensions'];
+                            const itemRows = DATA.items.map(it => {
+                                const row = {};
+                                ITEM_COLS.forEach(k => { if (k in it) row[k] = it[k]; });
+                                row.sort_order = it.order ?? it.num ?? it.sort_order ?? 0;
+                                return row;
+                            });
+                            const { error: ie } = await supa.from('items').upsert(itemRows, { onConflict: 'id' });
+                            if (ie) throw ie;
+                        }
+                        pill.classList.remove('ak-pill--saving');
+                        pill.classList.add('ak-pill--ok');
+                        $('#save-label').textContent = 'נשמר ב-Supabase';
+                        setTimeout(() => { pill.style.display = 'none'; }, 1500);
                     } catch (e) {
                         pill.classList.remove('ak-pill--saving');
                         $('#save-label').textContent = 'שגיאה בשמירה';
-                        toast('שמירה לשרת נכשלה', 'err');
-                        return;
+                        toast('שמירה ל-Supabase נכשלה: ' + (e.message || e), 'err');
                     }
+                } else {
+                    pill.classList.remove('ak-pill--saving');
+                    pill.classList.add('ak-pill--ok');
+                    $('#save-label').textContent = 'נשמר מקומית';
+                    setTimeout(() => { pill.style.display = 'none'; }, 1500);
                 }
-                pill.classList.remove('ak-pill--saving');
-                pill.classList.add('ak-pill--ok');
-                $('#save-label').textContent = SERVER_MODE ? 'נשמר בשרת' : 'נשמר מקומית';
-                setTimeout(() => { pill.style.display = 'none'; }, 1500);
             }, opts.immediate ? 0 : 400);
         }
 
@@ -2319,7 +2364,9 @@
                     if (op === 'cancel') return clearSelect();
                     if (op === 'del') {
                         if (!await confirmDialog('למחוק את הנבחרות?', `${selectedIds.size} יצירות יוסרו לצמיתות.`)) return;
+                        const idsToDelete = [...selectedIds];
                         DATA.items = DATA.items.filter(i => !selectedIds.has(i.id));
+                        if (SERVER_MODE) supa.from('items').delete().in('id', idsToDelete);
                         clearSelect(); persist(); renderItems(); renderDashboard();
                         toast('נמחקו'); return;
                     }
@@ -2432,28 +2479,29 @@
                 toast('הקובץ גדול מדי (מקס 8MB)', 'err');
                 return;
             }
-            // For server mode, upload immediately
+            // Upload to Supabase Storage
             if (SERVER_MODE) {
-                const fd = new FormData();
-                fd.append('image', file);
-                toast('מעלה תמונה...');
-                fetch('./api/upload', { method: 'POST', body: fd })
-                    .then(r => r.json())
-                    .then(j => {
-                        if (j.path) {
-                            pendingImageDataUrl = j.path;
-                            $('#drop-preview').src = j.path;
-                            $('#drop-preview').style.display = '';
-                            $('#drop-empty').style.display = 'none';
-                            toast('הועלה');
-                        } else {
-                            throw new Error('No path');
-                        }
-                    })
-                    .catch(() => {
+                (async () => {
+                    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+                    const filename = `alakir-${Date.now()}.${ext}`;
+                    toast('מעלה תמונה...');
+                    const { data: up, error: upErr } = await supa.storage
+                        .from('gallery-images')
+                        .upload(filename, file, { upsert: true, contentType: file.type });
+                    if (upErr) {
                         toast('העלאה נכשלה — שומר מקומית', 'err');
                         readAsDataUrl(file);
-                    });
+                        return;
+                    }
+                    const { data: { publicUrl } } = supa.storage
+                        .from('gallery-images')
+                        .getPublicUrl(up.path);
+                    pendingImageDataUrl = publicUrl;
+                    $('#drop-preview').src = publicUrl;
+                    $('#drop-preview').style.display = '';
+                    $('#drop-empty').style.display = 'none';
+                    toast('הועלה');
+                })();
             } else {
                 readAsDataUrl(file);
             }
@@ -2530,6 +2578,7 @@
 
         function deleteItem(id) {
             DATA.items = DATA.items.filter(i => i.id !== id);
+            if (SERVER_MODE) supa.from('items').delete().eq('id', id);
             persist();
             renderItems();
             renderDashboard();
@@ -2819,7 +2868,7 @@
             const pill = $('#mode-pill');
             if (SERVER_MODE) {
                 pill.classList.add('ak-pill--ok');
-                $('#mode-label').textContent = 'שרת · Server';
+                $('#mode-label').textContent = 'Supabase · Live';
             } else {
                 pill.classList.remove('ak-pill--ok');
                 $('#mode-label').textContent = 'מקומי · Local';
@@ -2832,11 +2881,20 @@
         async function init() {
             await detectServer();
             updateModeIndicator();
+            const prevItemCount = (() => {
+                try { return (JSON.parse(localStorage.getItem(LS_KEY) || '{}')).items?.length || 0; } catch (_) { return 0; }
+            })();
             DATA = await loadData();
             // ensure required shape
             if (!DATA.settings) DATA.settings = defaultSettings();
             if (!DATA.items)    DATA.items = [];
             if (!DATA.orders)   DATA.orders = [];
+
+            // Auto-migrate: if we loaded from localStorage into an empty Supabase, push it up now
+            if (SERVER_MODE && DATA.items.length > 0 && DATA.items.length === prevItemCount) {
+                persist({ immediate: true });
+                toast('הנתונים הועלו ל-Supabase בהצלחה ✓');
+            }
 
             renderDashboard();
             renderItems();
