@@ -775,7 +775,7 @@ window.addEventListener("load", function() {
             e.preventDefault();
             return false;
         };
-        ['copy', 'cut', 'contextmenu', 'dragstart', 'selectstart']
+        ['copy', 'cut', 'dragstart', 'selectstart']
             .forEach(evt => document.addEventListener(evt, block, true));
         // Block keyboard shortcuts: Ctrl/Cmd+C, +A, +X, +S, +U, F12 view-source
         document.addEventListener('keydown', e => {
