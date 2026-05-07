@@ -792,4 +792,59 @@ window.addEventListener("load", function() {
         }, true);
     })();
     </script>
+
+<!-- Legal links -->
+<div style="text-align:center;padding:24px 16px;font-family:'Roboto Slab',Georgia,serif;font-size:11px;letter-spacing:.18em;color:#8c857c;display:flex;justify-content:center;gap:24px;flex-wrap:wrap;">
+  <a href="terms.html" target="_blank" rel="noopener" style="color:#8c857c;text-decoration:none;">תנאי שימוש</a>
+  <a href="privacy.html" target="_blank" rel="noopener" style="color:#8c857c;text-decoration:none;">מדיניות פרטיות</a>
+  <a href="accessibility.html" target="_blank" rel="noopener" style="color:#8c857c;text-decoration:none;">הצהרת נגישות</a>
+  <a href="mailto:amitush27@gmail.com" style="color:#8c857c;text-decoration:none;">צור קשר</a>
+</div>
+
+<!-- Accessibility Widget -->
+<style>
+#ak-a11y-btn{position:fixed;bottom:24px;right:24px;z-index:9999;width:52px;height:52px;
+  border-radius:50%;background:#2E728F;color:#fff;border:3px solid #fff;cursor:pointer;
+  font-size:22px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(0,0,0,0.3);transition:transform .2s;font-family:Arial,sans-serif;line-height:1;}
+#ak-a11y-btn:hover{transform:scale(1.1);}
+#ak-a11y-panel{position:fixed;bottom:86px;right:24px;z-index:9999;
+  background:#fff;border-radius:12px;padding:16px;width:200px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.18);display:none;direction:rtl;
+  font-family:"Roboto",system-ui,sans-serif;}
+#ak-a11y-panel.is-open{display:block;}
+#ak-a11y-panel h3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#4a4540;margin-bottom:12px;font-weight:600;}
+.ak-a11y-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:13px;color:#1a1a1a;}
+.ak-a11y-row:last-child{margin-bottom:0;}
+.ak-a11y-ctrl{display:flex;gap:6px;}
+.ak-a11y-ctrl button{width:28px;height:28px;border:1.5px solid #c89274;background:#fff;border-radius:6px;cursor:pointer;font-size:14px;font-weight:700;color:#8a4f2e;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.ak-a11y-ctrl button:hover{background:#f7f4ee;}
+.ak-a11y-toggle{width:44px;height:24px;border-radius:12px;border:none;cursor:pointer;background:#ddd;position:relative;transition:background .2s;}
+.ak-a11y-toggle.is-on{background:#2E728F;}
+.ak-a11y-toggle::after{content:'';position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:right .2s;}
+.ak-a11y-toggle.is-on::after{right:calc(100% - 21px);}
+body.ak-high-contrast{filter:contrast(1.6) saturate(0);}
+body.ak-underline-links a{text-decoration:underline!important;}
+</style>
+<div id="ak-a11y-btn" role="button" aria-label="תפריט נגישות" tabindex="0">♿</div>
+<div id="ak-a11y-panel" role="dialog" aria-label="אפשרויות נגישות">
+  <h3>נגישות</h3>
+  <div class="ak-a11y-row"><span>גודל טקסט</span><div class="ak-a11y-ctrl"><button id="ak-font-down" aria-label="הקטן">−</button><button id="ak-font-reset" aria-label="אפס" style="font-size:11px;">↺</button><button id="ak-font-up" aria-label="הגדל">+</button></div></div>
+  <div class="ak-a11y-row"><span>ניגודיות גבוהה</span><button class="ak-a11y-toggle" id="ak-contrast" aria-pressed="false"></button></div>
+  <div class="ak-a11y-row"><span>הדגשת קישורים</span><button class="ak-a11y-toggle" id="ak-links" aria-pressed="false"></button></div>
+</div>
+<script>
+(function(){
+  const btn=document.getElementById('ak-a11y-btn'),panel=document.getElementById('ak-a11y-panel');
+  let fs=100;
+  btn.addEventListener('click',()=>panel.classList.toggle('is-open'));
+  btn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')panel.classList.toggle('is-open');});
+  document.addEventListener('click',e=>{if(!btn.contains(e.target)&&!panel.contains(e.target))panel.classList.remove('is-open');});
+  document.getElementById('ak-font-up').addEventListener('click',()=>{fs=Math.min(fs+10,150);document.documentElement.style.fontSize=fs+'%';});
+  document.getElementById('ak-font-down').addEventListener('click',()=>{fs=Math.max(fs-10,80);document.documentElement.style.fontSize=fs+'%';});
+  document.getElementById('ak-font-reset').addEventListener('click',()=>{fs=100;document.documentElement.style.fontSize='';});
+  function mkT(id,cls){const t=document.getElementById(id);t.addEventListener('click',()=>{const on=t.classList.toggle('is-on');t.setAttribute('aria-pressed',on);document.body.classList.toggle(cls,on);});}
+  mkT('ak-contrast','ak-high-contrast');mkT('ak-links','ak-underline-links');
+})();
+</script>
 </body></html>
