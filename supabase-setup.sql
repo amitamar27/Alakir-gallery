@@ -37,10 +37,20 @@ CREATE TABLE IF NOT EXISTS public.orders (
   payment_ref TEXT        DEFAULT ''
 );
 
--- Disable RLS — access is protected by the app-level admin password
+-- items & settings: public read, open write (gallery data is non-sensitive)
 ALTER TABLE public.items    DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.settings DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.orders   DISABLE ROW LEVEL SECURITY;
+
+-- orders: RLS enabled — customers can INSERT, nobody can SELECT without auth
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anon insert orders" ON public.orders;
+CREATE POLICY "Anon insert orders"
+  ON public.orders FOR INSERT
+  WITH CHECK (true);
+
+-- To let the admin READ orders, run this after setting up Supabase Auth:
+-- CREATE POLICY "Auth read orders" ON public.orders FOR SELECT USING (auth.role() = 'authenticated');
 
 -- Storage bucket for painting images
 INSERT INTO storage.buckets (id, name, public)

@@ -1,0 +1,51 @@
+/* Shared stylesheet for all Alakir legal pages */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ak-cream:#f7f4ee;--ak-bg:#f0ece3;--ak-ink:#1a1a1a;--ak-ink-soft:#4a4540;
+  --ak-mute:#8c857c;--ak-terracotta:#c89274;--ak-terracotta-deep:#8a4f2e;
+  --ak-serif:"Roboto Slab",Georgia,serif;--ak-sans:"Roboto",system-ui,sans-serif;
+}
+body{background:var(--ak-bg);color:var(--ak-ink);font-family:var(--ak-sans);
+  font-size:15px;line-height:1.75;direction:rtl;}
+a{color:var(--ak-terracotta-deep);text-decoration:underline;}
+a:hover{color:var(--ak-terracotta);}
+
+/* Nav */
+.lp-nav{position:fixed;top:0;right:0;left:0;z-index:100;
+  background:rgba(240,236,227,.92);backdrop-filter:blur(10px);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 48px;border-bottom:1px solid rgba(0,0,0,.07);}
+.lp-nav__back{font-family:var(--ak-serif);font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;text-decoration:none;color:var(--ak-ink-soft);}
+.lp-nav__back:hover{color:var(--ak-terracotta);}
+.lp-nav__brand{font-family:var(--ak-serif);font-size:13px;letter-spacing:.34em;
+  text-transform:uppercase;color:var(--ak-ink);}
+
+/* Layout */
+.lp-wrap{max-width:760px;margin:0 auto;padding:120px 32px 80px;}
+.lp-title{font-family:var(--ak-serif);font-size:clamp(22px,4vw,32px);
+  font-weight:700;letter-spacing:.04em;color:var(--ak-ink);margin-bottom:8px;}
+.lp-updated{font-size:12px;color:var(--ak-mute);letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:48px;padding-bottom:24px;
+  border-bottom:1px solid rgba(0,0,0,.1);}
+.lp-section{margin-bottom:36px;}
+.lp-section h2{font-family:var(--ak-serif);font-size:15px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ak-terracotta-deep);
+  margin-bottom:12px;}
+.lp-section p{margin-bottom:10px;color:var(--ak-ink-soft);}
+.lp-section ul{padding-right:20px;margin-bottom:10px;color:var(--ak-ink-soft);}
+.lp-section ul li{margin-bottom:6px;}
+.lp-section a{color:var(--ak-terracotta-deep);}
+.lp-highlight{background:rgba(200,146,116,.1);border-right:3px solid var(--ak-terracotta);
+  padding:14px 18px;border-radius:2px;margin:16px 0;}
+.lp-highlight p{margin:0;font-weight:500;}
+
+/* Footer */
+.lp-footer{margin-top:64px;padding-top:24px;border-top:1px solid rgba(0,0,0,.1);
+  text-align:center;font-size:12px;color:var(--ak-mute);letter-spacing:.08em;}
+.lp-footer a{color:var(--ak-mute);margin:0 10px;}
+
+@media(max-width:600px){
+  .lp-nav{padding:12px 20px;}
+  .lp-wrap{padding:100px 20px 60px;}
+}
