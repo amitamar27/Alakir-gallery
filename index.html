@@ -151,7 +151,7 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 var breeze_prefetch = {"local_url":"","ignore_remote_prefetch":"1","ignore_list":["wp-admin","wp-login.php"]};
 //# sourceURL=breeze-prefetch-js-extra
 </script>
-<script src="./assets/breeze-prefetch-links.min.js" id="breeze-prefetch-js"></script>
+<script src="./assets/breeze-prefetch-links.min.js" id="breeze-prefetch-js" defer></script>
 <script src="./assets/jquery.min.js" id="jquery-core-js"></script>
 <script src="./assets/jquery-migrate.min.js" id="jquery-migrate-js"></script>
 
@@ -184,7 +184,11 @@ var breeze_prefetch = {"local_url":"","ignore_remote_prefetch":"1","ignore_list"
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <link rel="stylesheet" href="./assets/custom-styles.css">
 <link rel="stylesheet" href="./assets/gallery-clean.css">
-<script src="./assets/wp-emoji-release.min.js" defer=""></script></head>
+<script src="./assets/wp-emoji-release.min.js" defer=""></script>
+<!-- Preload critical assets -->
+<link rel="preload" as="image" href="./assets/background-street-art-scaled.png">
+<link rel="preload" as="image" href="./assets/alakir-gallery-1.png">
+</head>
 <body class="rtl home wp-singular page-template-default page page-id-34 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-template-canvas elementor-kit-7 elementor-page elementor-page-34 e--ua-blink e--ua-chrome e--ua-webkit" data-elementor-device-mode="desktop" style="">
 
 <!-- ============== NAVBAR ============== -->
@@ -719,8 +723,8 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
 //# sourceURL=https://wordpress-1585503-6192918.cloudwaysapps.com/wp-includes/js/wp-emoji-loader.min.js
 </script>
 <!-- Cards GSAP animation removed - replaced with clean static grid -->
-<script src="./assets/gsap.min.js"></script>
-<script src="./assets/ScrollTrigger.min.js"></script>
+<script src="./assets/gsap.min.js" defer></script>
+<script src="./assets/ScrollTrigger.min.js" defer></script>
 
 <script>
 window.addEventListener("load", function() {
@@ -772,7 +776,7 @@ window.addEventListener("load", function() {
 															<img fetchpriority="high" decoding="async" width="1536" height="1024" src="./assets/logo-alakir-gallery.png" class="attachment-full size-full wp-image-21" alt="logo alakir gallery">															</div>
 				</div>
 
-<script src="./assets/custom-scripts.js"></script>
+<script src="./assets/custom-scripts.js" defer></script>
     <script>
     /* ===== Anti-copy event guard =====
        Cancels copy/cut/drag/right-click globally. Form fields are exempt
