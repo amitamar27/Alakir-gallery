@@ -24,6 +24,25 @@
     <meta name="twitter:image" content="https://alakir-gallery.pages.dev/assets/logo-alakir-gallery.png">
     <link rel="canonical" href="https://alakir-gallery.pages.dev/gallery.html">
     <link rel="icon" href="./assets/logo-alakir-gallery.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": "THE WALL 2026 — Alakir Gallery",
+      "description": "הקולקציה המלאה של יצירות אמנות מקוריות של ALAKIR — Mixed Media, 2026, תל אביב. Original Israeli artworks for sale.",
+      "url": "https://alakir-gallery.pages.dev/gallery.html",
+      "image": "https://alakir-gallery.pages.dev/assets/logo-alakir-gallery.png",
+      "isPartOf": {
+        "@type": "ArtGallery",
+        "name": "Alakir Gallery",
+        "url": "https://alakir-gallery.pages.dev"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Alakir"
+      }
+    }
+    </script>
     <link rel="stylesheet" href="./assets/fonts-roboto-slab.css">
     <link rel="stylesheet" href="./assets/fonts-roboto.css">
     <link rel="stylesheet" href="./assets/fonts-rubik-doodle-shadow.css">
@@ -2268,9 +2287,37 @@ function buildCatalog() {
     if (data && Array.isArray(data.items) && data.items.length) {
         applySettings(data.settings);
         catalog = renderItems(data.items);
+        injectArtworkSchemas(data.items);
     } else {
         catalog = items.map(getDefaultItem);
     }
+}
+
+function injectArtworkSchemas(artworks) {
+    const base = 'https://alakir-gallery.pages.dev';
+    const schemas = artworks.map(a => ({
+        '@context': 'https://schema.org',
+        '@type': 'VisualArtwork',
+        'name': a.title || ('יצירה N° ' + a.num),
+        'creator': { '@type': 'Person', 'name': 'Alakir' },
+        'artMedium': a.medium || 'Mixed Media',
+        'dateCreated': a.year || '2026',
+        'image': a.img ? (a.img.startsWith('http') ? a.img : base + '/' + a.img) : '',
+        'description': a.description || '',
+        'url': base + '/gallery.html',
+        'offers': {
+            '@type': 'Offer',
+            'price': a.price,
+            'priceCurrency': 'ILS',
+            'availability': a.status === 'sold'
+                ? 'https://schema.org/SoldOut'
+                : 'https://schema.org/InStock'
+        }
+    }));
+    const el = document.createElement('script');
+    el.type = 'application/ld+json';
+    el.textContent = JSON.stringify(schemas);
+    document.head.appendChild(el);
 }
 
 function renderItems(dataItems) {
