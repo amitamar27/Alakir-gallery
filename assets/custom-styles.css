@@ -766,10 +766,10 @@ body.ak-logo-fade #logo-container {
         padding-right: 0;
     }
     .ak-about-images {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
     }
     .ak-about-img-slot {
-        aspect-ratio: 16/9;
+        aspect-ratio: 3/4;
     }
 }
 
