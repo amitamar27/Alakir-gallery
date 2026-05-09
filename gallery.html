@@ -1991,7 +1991,7 @@ function renderItems(dataItems) {
 
         el.innerHTML = `
             <div class="pg-frame">
-                <img src="${it.img}" alt="${it.alt || ('Alakir Gallery — N° ' + it.num)}" loading="lazy">
+                <img src="${it.img}" alt="${it.alt || ('Alakir Gallery — N° ' + it.num)}" loading="lazy" onerror="this.closest('.pg-item').style.display='none'">
                 <span class="pg-frame__num">N° ${String(it.num).padStart(2,'0')}</span>
                 ${ribbon}
                 ${buyTag}
