@@ -2035,8 +2035,8 @@ function renderItems(dataItems) {
 buildCatalog();
 const srcs = catalog.map(c => c.img);
 
-/* Re-render when Supabase data finishes loading (in case localStorage was stale) */
-if (window.__ALAKIR_DATA_READY__) {
+/* Re-render only on first visit (no localStorage cache) — avoids double-render flash */
+if (window.__ALAKIR_DATA_READY__ && catalog.length === 0) {
     window.__ALAKIR_DATA_READY__.then(() => {
         if (typeof window.__alakirRehydrate === 'function') {
             window.__alakirRehydrate();
