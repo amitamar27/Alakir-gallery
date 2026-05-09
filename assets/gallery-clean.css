@@ -7,7 +7,7 @@
 /* ---------- Override old broken styles for #gallery-section ---------- */
 #gallery-section.ak-gallery {
     /* Reset everything from old custom-styles + post-34.css */
-    margin-top: 100vh !important;       /* Keep this so logo splash stays full screen */
+    margin-top: 0 !important;
     min-height: auto !important;
     max-height: none !important;
     width: 100% !important;
