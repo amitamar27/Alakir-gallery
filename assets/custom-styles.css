@@ -694,6 +694,7 @@ body.ak-logo-fade #logo-container {
 
 /* --- 8. About ---------------------------------------------------------- */
 #about {
+    margin-top: 100vh; /* buffer zone for logo splash animation */
     border-top: 1px solid var(--ak-line);
     border-bottom: 1px solid var(--ak-line);
 }
