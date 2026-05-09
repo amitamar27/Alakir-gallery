@@ -1347,6 +1347,17 @@
                         <span>נרשמים</span>
                         <span class="ak-nav-item__count" id="nav-subs-count">0</span>
                     </button>
+                    <button class="ak-nav-item" data-view="events" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        <span>אירועים</span>
+                        <span class="ak-nav-item__count" id="nav-events-count">0</span>
+                    </button>
                 </div>
                 <div class="ak-side__group">
                     <div class="ak-side__h">תצורה</div>
@@ -1493,6 +1504,70 @@
                             <button class="ak-btn ak-btn--sm" id="subs-export" type="button">ייצוא CSV</button>
                         </div>
                         <div id="subs-content"></div>
+                    </section>
+
+                    <!-- ===== Events ===== -->
+                    <section class="ak-page" data-view="events">
+                        <div class="ak-pg__head">
+                            <div>
+                                <h1 class="ak-pg__title">אירועים</h1>
+                                <p class="ak-pg__sub">ניהול לוח אירועים · Events management</p>
+                            </div>
+                            <button class="ak-btn ak-btn--sm ak-btn--primary" id="events-add" type="button">+ אירוע חדש</button>
+                        </div>
+                        <div id="events-content"></div>
+
+                        <!-- Event form drawer -->
+                        <div class="ak-drawer" id="event-drawer" aria-hidden="true">
+                            <div class="ak-drawer__veil" id="event-drawer-veil"></div>
+                            <div class="ak-drawer__panel" role="dialog" aria-modal="true" aria-label="עריכת אירוע">
+                                <div class="ak-drawer__head">
+                                    <span class="ak-drawer__title" id="event-drawer-title">אירוע חדש</span>
+                                    <button class="ak-drawer__close" id="event-drawer-close" type="button">✕</button>
+                                </div>
+                                <div class="ak-drawer__body">
+                                    <div class="ak-field">
+                                        <label class="ak-label">כותרת *</label>
+                                        <input type="text" class="ak-input" id="ev-title" placeholder="שם האירוע">
+                                    </div>
+                                    <div class="ak-field">
+                                        <label class="ak-label">תת כותרת / תיאור</label>
+                                        <textarea class="ak-input" id="ev-subtitle" rows="3" placeholder="תיאור קצר של האירוע"></textarea>
+                                    </div>
+                                    <div class="ak-row">
+                                        <div class="ak-field">
+                                            <label class="ak-label">תאריך *</label>
+                                            <input type="date" class="ak-input" id="ev-date">
+                                        </div>
+                                        <div class="ak-field">
+                                            <label class="ak-label">סוג אירוע</label>
+                                            <input type="text" class="ak-input" id="ev-type" placeholder="ערב פתיחה / סדנה / שיחת אמנים...">
+                                        </div>
+                                    </div>
+                                    <div class="ak-field">
+                                        <label class="ak-label">לינק להרשמה</label>
+                                        <input type="url" class="ak-input" id="ev-url" placeholder="https://...">
+                                    </div>
+                                    <div class="ak-field">
+                                        <label class="ak-label">תמונה</label>
+                                        <div class="ak-drop" id="ev-drop">
+                                            <div id="ev-drop-empty">
+                                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                                <div class="ak-drop__cta">גרור תמונה לכאן</div>
+                                                <div class="ak-drop__hint">JPG / PNG / WEBP · עד 8MB</div>
+                                            </div>
+                                            <img id="ev-drop-preview" style="display:none;width:100%;border-radius:6px;object-fit:cover;max-height:200px;" alt="">
+                                        </div>
+                                        <input type="file" id="ev-drop-input" accept="image/*" style="display:none">
+                                    </div>
+                                </div>
+                                <div class="ak-drawer__foot">
+                                    <button class="ak-btn ak-btn--ghost ak-btn--sm" id="ev-delete" type="button" style="margin-left:auto;color:#c0392b;display:none">מחק</button>
+                                    <button class="ak-btn ak-btn--sm" id="ev-cancel" type="button">ביטול</button>
+                                    <button class="ak-btn ak-btn--sm ak-btn--primary" id="ev-save" type="button">שמור</button>
+                                </div>
+                            </div>
+                        </div>
                     </section>
 
                     <!-- ===== Settings ===== -->
@@ -1704,6 +1779,16 @@
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
                 <span>נרשמים</span>
+            </button>
+            <button class="ak-nav-item" data-view="events" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <span>אירועים</span>
             </button>
             <button class="ak-nav-item" data-view="settings" type="button">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
@@ -2147,6 +2232,7 @@
             if (name === 'orders')      renderOrders();
             if (name === 'settings')    renderSettings();
             if (name === 'subscribers') renderSubscribers();
+            if (name === 'events')      renderEvents();
         }
         document.addEventListener('click', e => {
             const nav = e.target.closest('[data-view]');
@@ -2798,6 +2884,164 @@
             a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
             a.download = 'subscribers.csv';
             a.click();
+        });
+
+        /* ============================================================
+           EVENTS
+           ============================================================ */
+        const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+        let eventsCache = [];
+        let editingEventId = null;
+        let pendingEventImg = null;
+
+        async function renderEvents() {
+            const el = $('#events-content');
+            el.innerHTML = '<p style="color:var(--ak-mute);padding:20px 0">טוען...</p>';
+            try {
+                const { data, error } = await supa.from('events').select('*').order('event_date');
+                if (error) throw error;
+                eventsCache = data || [];
+                $('#nav-events-count').textContent = eventsCache.length;
+                if (!eventsCache.length) {
+                    el.innerHTML = '<p style="color:var(--ak-mute);padding:20px 0">אין אירועים עדיין. לחץ "+ אירוע חדש" להוספה.</p>';
+                    return;
+                }
+                const rows = eventsCache.map(ev => {
+                    const d = new Date(ev.event_date + 'T00:00:00');
+                    const dateStr = d.getDate() + ' ' + MONTHS_HE[d.getMonth()] + ' ' + d.getFullYear();
+                    const past = d < new Date();
+                    return '<tr style="opacity:' + (past ? '0.5' : '1') + '">' +
+                        '<td style="padding:10px 14px;border-bottom:1px solid var(--ak-line);font-size:13px">' + ev.title + '</td>' +
+                        '<td style="padding:10px 14px;border-bottom:1px solid var(--ak-line);font-size:12px;color:var(--ak-mute)">' + dateStr + (past ? ' (עבר)' : '') + '</td>' +
+                        '<td style="padding:10px 14px;border-bottom:1px solid var(--ak-line);font-size:12px;color:var(--ak-mute)">' + (ev.event_type || '—') + '</td>' +
+                        '<td style="padding:10px 14px;border-bottom:1px solid var(--ak-line)">' +
+                            '<button class="ak-btn ak-btn--sm ak-btn--ghost" data-ev-edit="' + ev.id + '" type="button">ערוך</button>' +
+                        '</td></tr>';
+                }).join('');
+                el.innerHTML = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;background:var(--ak-cream);border-radius:8px;overflow:hidden;border:1px solid var(--ak-line)">' +
+                    '<thead><tr style="background:var(--ak-ink);color:var(--ak-cream)">' +
+                    '<th style="padding:10px 14px;text-align:right;font-size:11px;letter-spacing:.16em">כותרת</th>' +
+                    '<th style="padding:10px 14px;text-align:right;font-size:11px;letter-spacing:.16em">תאריך</th>' +
+                    '<th style="padding:10px 14px;text-align:right;font-size:11px;letter-spacing:.16em">סוג</th>' +
+                    '<th style="padding:10px 14px;width:80px"></th></tr></thead>' +
+                    '<tbody>' + rows + '</tbody></table></div>';
+
+                el.querySelectorAll('[data-ev-edit]').forEach(btn => {
+                    btn.addEventListener('click', () => openEventDrawer(btn.dataset.evEdit));
+                });
+            } catch (e) {
+                el.innerHTML = '<p style="color:#c0392b;padding:20px 0">שגיאה: ' + e.message + '</p>';
+            }
+        }
+
+        function openEventDrawer(id) {
+            editingEventId = id || null;
+            pendingEventImg = null;
+            $('#ev-drop-preview').style.display = 'none';
+            $('#ev-drop-empty').style.display = '';
+            $('#ev-delete').style.display = id ? '' : 'none';
+            $('#event-drawer-title').textContent = id ? 'עריכת אירוע' : 'אירוע חדש';
+
+            if (id) {
+                const ev = eventsCache.find(e => e.id === id);
+                if (!ev) return;
+                $('#ev-title').value    = ev.title || '';
+                $('#ev-subtitle').value = ev.subtitle || '';
+                $('#ev-date').value     = ev.event_date || '';
+                $('#ev-type').value     = ev.event_type || '';
+                $('#ev-url').value      = ev.register_url || '';
+                if (ev.img) {
+                    $('#ev-drop-preview').src = ev.img;
+                    $('#ev-drop-preview').style.display = '';
+                    $('#ev-drop-empty').style.display = 'none';
+                    pendingEventImg = ev.img;
+                }
+            } else {
+                $('#ev-title').value = '';
+                $('#ev-subtitle').value = '';
+                $('#ev-date').value = '';
+                $('#ev-type').value = '';
+                $('#ev-url').value = '';
+            }
+
+            $('#event-drawer').classList.add('is-open');
+            $('#event-drawer').setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEventDrawer() {
+            $('#event-drawer').classList.remove('is-open');
+            $('#event-drawer').setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        $('#events-add').addEventListener('click', () => openEventDrawer(null));
+        $('#ev-cancel').addEventListener('click', closeEventDrawer);
+        $('#ev-delete').addEventListener('click', async () => {
+            if (!editingEventId) return;
+            if (!await confirmDialog('למחוק את האירוע?', 'פעולה זו אינה הפיכה.')) return;
+            await supa.from('events').delete().eq('id', editingEventId);
+            closeEventDrawer();
+            renderEvents();
+            toast('האירוע נמחק');
+        });
+        $('#event-drawer-veil').addEventListener('click', closeEventDrawer);
+        $('#event-drawer-close').addEventListener('click', closeEventDrawer);
+
+        // Image upload for events
+        const evDrop = $('#ev-drop');
+        const evInput = $('#ev-drop-input');
+        evDrop.addEventListener('click', () => evInput.click());
+        evDrop.addEventListener('dragover', e => { e.preventDefault(); evDrop.classList.add('is-over'); });
+        evDrop.addEventListener('dragleave', () => evDrop.classList.remove('is-over'));
+        evDrop.addEventListener('drop', e => { e.preventDefault(); evDrop.classList.remove('is-over'); const f = e.dataTransfer.files?.[0]; if (f) handleEventImg(f); });
+        evInput.addEventListener('change', e => { const f = e.target.files?.[0]; if (f) handleEventImg(f); e.target.value = ''; });
+
+        async function handleEventImg(file) {
+            if (!file.type.startsWith('image/')) return toast('אנא בחרו קובץ תמונה', 'err');
+            if (file.size > 8 * 1024 * 1024) return toast('הקובץ גדול מדי (מקס 8MB)', 'err');
+            if (SERVER_MODE) {
+                const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+                const filename = 'event-' + Date.now() + '.' + ext;
+                toast('מעלה תמונה...');
+                const { data: up, error: upErr } = await supa.storage.from('gallery-images').upload(filename, file, { upsert: true, contentType: file.type });
+                if (upErr) { toast('העלאה נכשלה', 'err'); return; }
+                const { data: { publicUrl } } = supa.storage.from('gallery-images').getPublicUrl(up.path);
+                pendingEventImg = publicUrl;
+                $('#ev-drop-preview').src = publicUrl;
+                $('#ev-drop-preview').style.display = '';
+                $('#ev-drop-empty').style.display = 'none';
+                toast('הועלה');
+            }
+        }
+
+        $('#ev-save').addEventListener('click', async () => {
+            const title = $('#ev-title').value.trim();
+            const date  = $('#ev-date').value;
+            if (!title) return toast('יש להזין כותרת', 'err');
+            if (!date)  return toast('יש לבחור תאריך', 'err');
+
+            const payload = {
+                title,
+                subtitle:     $('#ev-subtitle').value.trim(),
+                event_date:   date,
+                event_type:   $('#ev-type').value.trim(),
+                register_url: $('#ev-url').value.trim(),
+                img:          pendingEventImg || '',
+                active:       true
+            };
+
+            let error;
+            if (editingEventId) {
+                ({ error } = await supa.from('events').update(payload).eq('id', editingEventId));
+            } else {
+                ({ error } = await supa.from('events').insert(payload));
+            }
+
+            if (error) return toast('שגיאה: ' + error.message, 'err');
+            closeEventDrawer();
+            renderEvents();
+            toast(editingEventId ? 'האירוע עודכן' : 'האירוע נוצר');
         });
 
         /* ============================================================

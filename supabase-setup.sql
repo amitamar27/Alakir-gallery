@@ -52,6 +52,20 @@ CREATE POLICY "Anon insert orders"
 -- To let the admin READ orders, run this after setting up Supabase Auth:
 -- CREATE POLICY "Auth read orders" ON public.orders FOR SELECT USING (auth.role() = 'authenticated');
 
+-- Events
+CREATE TABLE IF NOT EXISTS public.events (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title        TEXT NOT NULL DEFAULT '',
+  subtitle     TEXT DEFAULT '',
+  event_date   DATE NOT NULL,
+  img          TEXT DEFAULT '',
+  event_type   TEXT DEFAULT '',
+  register_url TEXT DEFAULT '',
+  active       BOOLEAN DEFAULT true,
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.events DISABLE ROW LEVEL SECURITY;
+
 -- Newsletter subscribers
 CREATE TABLE IF NOT EXISTS public.subscribers (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),

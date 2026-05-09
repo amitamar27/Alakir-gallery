@@ -456,18 +456,17 @@ var breeze_prefetch = {"local_url":"","ignore_remote_prefetch":"1","ignore_list"
             <div class="ak-eyebrow">לוח אירועים · אביב 2026</div>
             <h2 class="ak-h2 ak-h2--ink">Events</h2>
             <div class="ak-h2-flourish">
-                <span class="ak-h2-flourish__num">5 קרובים</span>
+                <span class="ak-h2-flourish__num" id="events-count">1 קרוב</span>
                 <span class="ak-h2-flourish__line"></span>
-                <span class="ak-h2-flourish__caption">מאי – יוני · 2026</span>
+                <span class="ak-h2-flourish__caption" id="events-period">2026</span>
             </div>
             <p class="ak-lede">תערוכות, סדנאות ושיחות עם אמנים. הכל פתוח לקהל הרחב — אנא הירשמו מראש.</p>
         </div>
     </div>
 
     <div class="ak-events-track-wrap ak-reveal">
-        <div class="ak-events-track">
-
-            <article class="ak-event" data-cursor="להרשמה">
+        <div class="ak-events-track" id="ak-events-track">
+            <article class="ak-event ak-event--placeholder" data-cursor="להרשמה">
                 <div class="ak-event__img" style="background-image: url('./assets/alakir-gallery-1.png');">
                     <div class="ak-event__date-badge">
                         <div class="ak-event__day">15</div>
@@ -481,67 +480,6 @@ var breeze_prefetch = {"local_url":"","ignore_remote_prefetch":"1","ignore_list"
                     <a href="#" class="ak-event__cta">לפרטים <span>←</span></a>
                 </div>
             </article>
-
-            <article class="ak-event" data-cursor="להרשמה">
-                <div class="ak-event__img" style="background-image: url('./assets/alakir-gallery-2.png'); background-position: top;">
-                    <div class="ak-event__date-badge">
-                        <div class="ak-event__day">22</div>
-                        <div class="ak-event__month">מאי</div>
-                    </div>
-                </div>
-                <div class="ak-event__body">
-                    <div class="ak-event__kind">סדנה</div>
-                    <h3 class="ak-event__title">סדנת אקריליק עם רותם אברהם</h3>
-                    <p class="ak-event__desc">סדנה מעשית בת ארבע שעות. כל החומרים כלולים. מספר המקומות מוגבל ל-12 משתתפים.</p>
-                    <a href="#" class="ak-event__cta">להרשמה <span>←</span></a>
-                </div>
-            </article>
-
-            <article class="ak-event" data-cursor="לכניסה">
-                <div class="ak-event__img" style="background-image: url('./assets/alakir-gallery-4.png');">
-                    <div class="ak-event__date-badge">
-                        <div class="ak-event__day">03</div>
-                        <div class="ak-event__month">יוני</div>
-                    </div>
-                </div>
-                <div class="ak-event__body">
-                    <div class="ak-event__kind">שיחת אמנים</div>
-                    <h3 class="ak-event__title">אמנות עכשווית בישראל</h3>
-                    <p class="ak-event__desc">שיחה פתוחה עם אוצרת הגלריה ושני אמנים מובילים. שאלות מהקהל בסיום.</p>
-                    <a href="#" class="ak-event__cta">לפרטים <span>←</span></a>
-                </div>
-            </article>
-
-            <article class="ak-event" data-cursor="להרשמה">
-                <div class="ak-event__img" style="background-image: url('./assets/alakir-gallery-1.png'); background-position: bottom;">
-                    <div class="ak-event__date-badge">
-                        <div class="ak-event__day">14</div>
-                        <div class="ak-event__month">יוני</div>
-                    </div>
-                </div>
-                <div class="ak-event__body">
-                    <div class="ak-event__kind">ליל גלריה</div>
-                    <h3 class="ak-event__title">ליל גלריה לבן</h3>
-                    <p class="ak-event__desc">ערב מיוחד עד חצות — הגלריה פתוחה, סיורים מונחים, מוזיקה חיה. כניסה חופשית.</p>
-                    <a href="#" class="ak-event__cta">לפרטים <span>←</span></a>
-                </div>
-            </article>
-
-            <article class="ak-event" data-cursor="להרשמה">
-                <div class="ak-event__img" style="background-image: url('./assets/alakir-gallery-2.png'); background-position: center;">
-                    <div class="ak-event__date-badge">
-                        <div class="ak-event__day">28</div>
-                        <div class="ak-event__month">יוני</div>
-                    </div>
-                </div>
-                <div class="ak-event__body">
-                    <div class="ak-event__kind">מפגש קבוצתי</div>
-                    <h3 class="ak-event__title">מועדון אספנים</h3>
-                    <p class="ak-event__desc">ערב מקצועי לאספנים מתחילים ומתקדמים. כיצד לבחון יצירה, להעריך ולקנות נכון.</p>
-                    <a href="#" class="ak-event__cta">לפרטים <span>←</span></a>
-                </div>
-            </article>
-
         </div>
     </div>
 
@@ -779,6 +717,74 @@ window.addEventListener("load", function() {
 				</div>
 
 <script src="./assets/custom-scripts.js" defer></script>
+
+<!-- Events: loads upcoming events from Supabase -->
+<script>
+(function () {
+    const SUPA_URL = 'https://njlnwpgbestsiehabqbq.supabase.co';
+    const SUPA_KEY = 'sb_publishable_bLSJ_TnoexNhy1HfEPGxBg_7BZ89_rS';
+    const HEADERS  = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY };
+    const MONTHS   = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+
+    async function loadEvents() {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const res = await fetch(
+                SUPA_URL + '/rest/v1/events?select=*&active=eq.true&event_date=gte.' + today + '&order=event_date&limit=8',
+                { headers: HEADERS }
+            );
+            if (!res.ok) return;
+            const events = await res.json();
+            if (!events || !events.length) return;
+
+            const track = document.getElementById('ak-events-track');
+            if (!track) return;
+
+            // Remove placeholder
+            const ph = track.querySelector('.ak-event--placeholder');
+            if (ph) ph.remove();
+
+            // Render events
+            events.forEach(ev => {
+                const d = new Date(ev.event_date + 'T00:00:00');
+                const day   = String(d.getDate()).padStart(2, '0');
+                const month = MONTHS[d.getMonth()];
+                const img   = ev.img ? 'background-image:url(' + ev.img + ')' : '';
+                const href  = ev.register_url || '#';
+                const ctaTxt = ev.register_url ? 'להרשמה' : 'לפרטים';
+
+                const art = document.createElement('article');
+                art.className = 'ak-event';
+                art.dataset.cursor = ctaTxt;
+                art.innerHTML =
+                    '<div class="ak-event__img" style="' + img + '">' +
+                        '<div class="ak-event__date-badge">' +
+                            '<div class="ak-event__day">' + day + '</div>' +
+                            '<div class="ak-event__month">' + month + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="ak-event__body">' +
+                        '<div class="ak-event__kind">' + (ev.event_type || '') + '</div>' +
+                        '<h3 class="ak-event__title">' + ev.title + '</h3>' +
+                        '<p class="ak-event__desc">' + (ev.subtitle || '') + '</p>' +
+                        '<a href="' + href + '" target="_blank" rel="noopener" class="ak-event__cta">' + ctaTxt + ' <span>←</span></a>' +
+                    '</div>';
+                track.appendChild(art);
+            });
+
+            // Update counter
+            const countEl = document.getElementById('events-count');
+            if (countEl) countEl.textContent = events.length + ' קרובים';
+        } catch (_) {}
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadEvents);
+    } else {
+        loadEvents();
+    }
+})();
+</script>
 
 <!-- Featured gallery: loads top-3 featured items from Supabase -->
 <script>
