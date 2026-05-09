@@ -2640,16 +2640,9 @@ function setLbContent(idx) {
     lbNum.textContent = 'N° ' + String(c.num).padStart(2,'0');
     lbTitle.textContent = c.title;
     lbPrice.textContent = fmt(c.price);
-
-    const sold = c.status === 'sold' || c.status === 'reserved';
-    lbAdd.style.display = sold ? 'none' : '';
-    lbBuy.style.display = sold ? 'none' : '';
-
-    if (!sold) {
-        const inCart = cart.some(l => l.id === c.id);
-        lbAdd.textContent = inCart ? '✓ בסל' : 'הוסף לסל';
-        lbAdd.classList.toggle('pg-lb__btn--added', inCart);
-    }
+    const inCart = cart.some(l => l.id === c.id);
+    lbAdd.textContent = inCart ? '✓ בסל' : 'הוסף לסל';
+    lbAdd.classList.toggle('pg-lb__btn--added', inCart);
 }
 
 function openLb(idx) {
