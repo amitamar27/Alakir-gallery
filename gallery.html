@@ -1961,7 +1961,7 @@ function renderItems(dataItems) {
     // wipe the grid and rebuild
     grid.innerHTML = '';
     const newItems = [];
-    sorted.forEach((it, i) => {
+    sorted.filter(it => it.img && it.img.trim() !== '').forEach((it, i) => {
         const el = document.createElement('div');
         el.className = 'pg-item';
         el.dataset.id    = it.id;
