@@ -779,6 +779,54 @@ window.addEventListener("load", function() {
 				</div>
 
 <script src="./assets/custom-scripts.js" defer></script>
+<script>
+(function () {
+    const SUPA_URL = 'https://njlnwpgbestsiehabqbq.supabase.co';
+    const SUPA_KEY = 'sb_publishable_bLSJ_TnoexNhy1HfEPGxBg_7BZ89_rS';
+
+    const form  = document.querySelector('.ak-newsletter__form');
+    if (!form) return;
+
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const input  = form.querySelector('.ak-newsletter__input');
+        const btn    = form.querySelector('.ak-newsletter__submit');
+        const email  = input.value.trim();
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            input.style.borderColor = '#c0392b';
+            input.focus();
+            return;
+        }
+        input.style.borderColor = '';
+        btn.disabled = true;
+        btn.textContent = 'שולח...';
+
+        try {
+            const res = await fetch(SUPA_URL + '/rest/v1/subscribers', {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPA_KEY,
+                    'Authorization': 'Bearer ' + SUPA_KEY,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({ email })
+            });
+
+            if (res.ok || res.status === 409) {
+                form.innerHTML = '<p style="font-family:\'Roboto Slab\',serif;letter-spacing:.12em;color:var(--ak-ink);padding:12px 0">✓ נרשמת בהצלחה — נתראה בתערוכה הבאה</p>';
+            } else {
+                throw new Error(res.status);
+            }
+        } catch (_) {
+            btn.disabled = false;
+            btn.textContent = 'הרשמה';
+            input.style.borderColor = '#c0392b';
+        }
+    });
+})();
+</script>
     <script>
     /* ===== Anti-copy event guard =====
        Cancels copy/cut/drag/right-click globally. Form fields are exempt

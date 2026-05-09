@@ -52,6 +52,16 @@ CREATE POLICY "Anon insert orders"
 -- To let the admin READ orders, run this after setting up Supabase Auth:
 -- CREATE POLICY "Auth read orders" ON public.orders FOR SELECT USING (auth.role() = 'authenticated');
 
+-- Newsletter subscribers
+CREATE TABLE IF NOT EXISTS public.subscribers (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email      TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  status     TEXT DEFAULT 'active'
+);
+
+ALTER TABLE public.subscribers DISABLE ROW LEVEL SECURITY;
+
 -- Storage bucket for painting images
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('gallery-images', 'gallery-images', true)

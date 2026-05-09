@@ -1337,6 +1337,16 @@
                         <span>הזמנות</span>
                         <span class="ak-nav-item__count" id="nav-orders-count">0</span>
                     </button>
+                    <button class="ak-nav-item" data-view="subscribers" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        <span>נרשמים</span>
+                        <span class="ak-nav-item__count" id="nav-subs-count">0</span>
+                    </button>
                 </div>
                 <div class="ak-side__group">
                     <div class="ak-side__h">תצורה</div>
@@ -1471,6 +1481,18 @@
                             <button class="ak-btn ak-btn--sm" id="orders-export" type="button">ייצוא CSV</button>
                         </div>
                         <div id="orders-content"></div>
+                    </section>
+
+                    <!-- ===== Subscribers ===== -->
+                    <section class="ak-page" data-view="subscribers">
+                        <div class="ak-pg__head">
+                            <div>
+                                <h1 class="ak-pg__title">נרשמים לניוזלטר</h1>
+                                <p class="ak-pg__sub">רשימת מנויים · Newsletter subscribers</p>
+                            </div>
+                            <button class="ak-btn ak-btn--sm" id="subs-export" type="button">ייצוא CSV</button>
+                        </div>
+                        <div id="subs-content"></div>
                     </section>
 
                     <!-- ===== Settings ===== -->
@@ -1673,6 +1695,15 @@
                     <circle cx="17" cy="20" r="1.5" fill="currentColor"/>
                 </svg>
                 <span>הזמנות</span>
+            </button>
+            <button class="ak-nav-item" data-view="subscribers" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span>נרשמים</span>
             </button>
             <button class="ak-nav-item" data-view="settings" type="button">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
@@ -2111,10 +2142,11 @@
             $$('.ak-page').forEach(p => p.classList.toggle('is-active', p.dataset.view === name));
             $$('.ak-nav-item').forEach(n =>
                 n.classList.toggle('is-active', n.dataset.view === name));
-            if (name === 'dashboard') renderDashboard();
-            if (name === 'items')     renderItems();
-            if (name === 'orders')    renderOrders();
-            if (name === 'settings')  renderSettings();
+            if (name === 'dashboard')   renderDashboard();
+            if (name === 'items')       renderItems();
+            if (name === 'orders')      renderOrders();
+            if (name === 'settings')    renderSettings();
+            if (name === 'subscribers') renderSubscribers();
         }
         document.addEventListener('click', e => {
             const nav = e.target.closest('[data-view]');
@@ -2707,6 +2739,66 @@
             $('#order-drawer').classList.remove('is-open');
             document.body.style.overflow = '';
         }));
+
+        /* ============================================================
+           SUBSCRIBERS
+           ============================================================ */
+        let subscribersCache = [];
+
+        async function renderSubscribers() {
+            const el = $('#subs-content');
+            el.innerHTML = '<p style="color:var(--ak-mute);padding:20px 0">טוען...</p>';
+
+            try {
+                const { data, error } = await supa.from('subscribers').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                subscribersCache = data || [];
+                $('#nav-subs-count').textContent = subscribersCache.length;
+
+                if (!subscribersCache.length) {
+                    el.innerHTML = '<p style="color:var(--ak-mute);padding:20px 0">אין נרשמים עדיין.</p>';
+                    return;
+                }
+
+                const rows = subscribersCache.map(s => `
+                    <tr>
+                        <td style="padding:10px 14px;border-bottom:1px solid var(--ak-line);font-size:13px">${s.email}</td>
+                        <td style="padding:10px 14px;border-bottom:1px solid var(--ak-line);font-size:12px;color:var(--ak-mute)">${new Date(s.created_at).toLocaleDateString('he-IL')}</td>
+                        <td style="padding:10px 14px;border-bottom:1px solid var(--ak-line)">
+                            <span style="font-size:11px;letter-spacing:.1em;padding:2px 8px;border-radius:20px;background:${s.status==='active'?'rgba(74,124,89,.15)':'rgba(140,133,124,.12)'};color:${s.status==='active'?'var(--ak-green)':'var(--ak-mute)'}">${s.status==='active'?'פעיל':'לא פעיל'}</span>
+                        </td>
+                    </tr>`).join('');
+
+                el.innerHTML = `
+                    <p style="margin-bottom:16px;color:var(--ak-mute);font-size:13px">${subscribersCache.length} נרשמים סה"כ</p>
+                    <div style="overflow-x:auto">
+                    <table style="width:100%;border-collapse:collapse;background:var(--ak-cream);border-radius:8px;overflow:hidden;border:1px solid var(--ak-line)">
+                        <thead>
+                            <tr style="background:var(--ak-ink);color:var(--ak-cream)">
+                                <th style="padding:10px 14px;text-align:right;font-size:11px;letter-spacing:.16em;font-weight:600">אימייל</th>
+                                <th style="padding:10px 14px;text-align:right;font-size:11px;letter-spacing:.16em;font-weight:600">תאריך הרשמה</th>
+                                <th style="padding:10px 14px;text-align:right;font-size:11px;letter-spacing:.16em;font-weight:600">סטטוס</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                    </div>`;
+            } catch (e) {
+                el.innerHTML = `<p style="color:#c0392b;padding:20px 0">שגיאה: ${e.message}</p>`;
+            }
+        }
+
+        document.getElementById('subs-export').addEventListener('click', () => {
+            if (!subscribersCache.length) return toast('אין נרשמים לייצוא', 'err');
+            const csv = 'email,date,status\n' +
+                subscribersCache.map(s =>
+                    `${s.email},${new Date(s.created_at).toLocaleDateString('he-IL')},${s.status}`
+                ).join('\n');
+            const a = document.createElement('a');
+            a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+            a.download = 'subscribers.csv';
+            a.click();
+        });
 
         /* ============================================================
            SETTINGS
