@@ -2018,11 +2018,31 @@ function renderItems(dataItems) {
         if (im.complete) im.classList.add('loaded');
         else im.addEventListener('load', () => im.classList.add('loaded'));
     });
+
+    /* Hide items where image failed to load (not caught by onerror in some browsers) */
+    setTimeout(() => {
+        newItems.forEach(el => {
+            const im = el.querySelector('img');
+            if (im && im.complete && im.naturalWidth === 0) {
+                el.style.display = 'none';
+            }
+        });
+    }, 3000);
+
     return newItems;
 }
 
 buildCatalog();
 const srcs = catalog.map(c => c.img);
+
+/* Re-render when Supabase data finishes loading (in case localStorage was stale) */
+if (window.__ALAKIR_DATA_READY__) {
+    window.__ALAKIR_DATA_READY__.then(() => {
+        if (typeof window.__alakirRehydrate === 'function') {
+            window.__alakirRehydrate();
+        }
+    }).catch(() => {});
+}
 
 /* expose a re-hydrate hook for cross-tab admin updates */
 window.__alakirRehydrate = function () {
