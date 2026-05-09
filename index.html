@@ -779,6 +779,55 @@ window.addEventListener("load", function() {
 				</div>
 
 <script src="./assets/custom-scripts.js" defer></script>
+
+<!-- Featured gallery: loads top-3 featured items from Supabase -->
+<script>
+(function () {
+    const SUPA_URL = 'https://njlnwpgbestsiehabqbq.supabase.co';
+    const SUPA_KEY = 'sb_publishable_bLSJ_TnoexNhy1HfEPGxBg_7BZ89_rS';
+    const HEADERS  = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY };
+
+    async function loadFeatured() {
+        try {
+            const res = await fetch(
+                SUPA_URL + '/rest/v1/items?select=*&featured=eq.true&order=num&limit=3',
+                { headers: HEADERS }
+            );
+            if (!res.ok) return;
+            const items = await res.json();
+            if (!items || !items.length) return;
+
+            const figures = document.querySelectorAll('#gallery-section .ak-art');
+            items.slice(0, 3).forEach((item, i) => {
+                const fig = figures[i];
+                if (!fig) return;
+                const img     = fig.querySelector('img');
+                const numEl   = fig.querySelector('.ak-art__num');
+                const titleEl = fig.querySelector('.ak-art__title');
+                const metaEl  = fig.querySelector('.ak-art__meta');
+
+                if (img && item.img) {
+                    const src = item.img.startsWith('http') ? item.img : SUPA_URL + '/storage/v1/object/public/gallery-images/' + item.img;
+                    img.src = src;
+                    img.alt = 'יצירת אמנות מקורית של Alakir — ' + (item.title || '');
+                    img.removeAttribute('width');
+                    img.removeAttribute('height');
+                }
+                if (numEl)   numEl.textContent   = 'N° ' + String(item.num).padStart(2, '0');
+                if (titleEl) titleEl.textContent = item.title || '';
+                if (metaEl)  metaEl.textContent  = 'ALAKIR · ' + (item.year || '2026') + ' · ' + (item.medium || 'Mixed Media');
+            });
+        } catch (_) {}
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadFeatured);
+    } else {
+        loadFeatured();
+    }
+})();
+</script>
+
 <script>
 (function () {
     const SUPA_URL = 'https://njlnwpgbestsiehabqbq.supabase.co';
